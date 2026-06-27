@@ -3,7 +3,6 @@ import { ArcType } from "../../domain/types";
 
 type ArcSuggestionStepProps = {
   selectedArc: ArcType | null;
-  onSelectArc: (arc: ArcType) => void;
   onBack: () => void;
   onConfirm: () => void;
 };
@@ -12,7 +11,6 @@ const arcOptions: ArcType[] = ["deep_dive", "refresh", "surprise_me"];
 
 export function ArcSuggestionStep({
   selectedArc,
-  onSelectArc,
   onBack,
   onConfirm
 }: ArcSuggestionStepProps) {
@@ -25,9 +23,9 @@ export function ArcSuggestionStep({
         <h3 className="mt-3 font-spotifyTitle text-3xl font-bold text-white">
           Best fit: {selectedArc ? arcDisplayNames[selectedArc] : "Flow"}
         </h3>
-        <p className="mt-3 text-sm text-spotify-muted md:text-base">
-          Choose how this room should move. You can change it later, but this sets
-          the starting feel before playback begins.
+        <p className="ui-body mt-3">
+          This demo flow is mapped to one starting style. It stays visible here so
+          you can understand the room setup before playback begins.
         </p>
       </div>
 
@@ -39,11 +37,11 @@ export function ArcSuggestionStep({
             <button
               key={arc}
               type="button"
-              onClick={() => onSelectArc(arc)}
+              disabled
               className={`rounded-[20px] border px-5 py-4 text-left transition ${
                 active
                   ? "border-spotify-green bg-spotify-green text-black"
-                  : "border-white/10 bg-spotify-surface text-white hover:border-white/25 hover:bg-[#242424]"
+                  : "cursor-not-allowed border-white/8 bg-spotify-surface text-white/35"
               }`}
             >
               <p className="text-sm font-bold uppercase tracking-[0.12em]">
@@ -61,12 +59,10 @@ export function ArcSuggestionStep({
         })}
       </div>
 
-      <div className="rounded-[22px] border border-white/8 bg-spotify-surface p-4">
-        <p className="text-sm text-spotify-muted">
-          Think of this as choosing the room&apos;s starting style, not locking in a
-          permanent mode.
-        </p>
-      </div>
+      <p className="ui-hint px-1">
+          This prototype uses one mapped style per demo flow, so the other styles
+          stay visible for context but are not selectable here.
+      </p>
 
       <div className="flex flex-col gap-3 border-t border-white/8 pt-5 md:flex-row md:items-center md:justify-between">
         <button

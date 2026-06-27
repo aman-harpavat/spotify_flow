@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { FlowEntryCard } from "../components/home/FlowEntryCard";
 import { LauncherModal } from "../components/launcher/LauncherModal";
 import { useFlowStore } from "../app/store/flowStore";
@@ -21,8 +22,18 @@ const quickCollections = [
 ];
 
 export function HomeView() {
+  const navigate = useNavigate();
   const isLauncherOpen = useFlowStore((state) => state.isLauncherOpen);
   const openLauncher = useFlowStore((state) => state.openLauncher);
+  const startDemoRoomFromPrompt = useFlowStore((state) => state.startDemoRoomFromPrompt);
+
+  const handleOpenCollection = (title: string) => {
+    const result = startDemoRoomFromPrompt(title);
+
+    if (result.ok && result.roomId) {
+      navigate(`/room/${result.roomId}`);
+    }
+  };
 
   return (
     <>
@@ -61,7 +72,7 @@ export function HomeView() {
               <button
                 key={collection.title}
                 type="button"
-                onClick={openLauncher}
+                onClick={() => handleOpenCollection(collection.title)}
                 className="group overflow-hidden rounded-[18px] bg-spotify-surface p-4 text-left shadow-panel transition hover:bg-[#222222]"
               >
                 <div className={`h-40 rounded-[14px] ${collection.tone}`} />

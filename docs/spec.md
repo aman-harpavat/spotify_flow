@@ -231,7 +231,7 @@ Build the prototype as a Spotify-inspired desktop web experience.
 1. Left navigation / library shell
 2. Main content area
 3. Bottom playback bar
-4. Expandable queue panel / drawer
+4. Persistent queue rail
 5. Flow launcher modal or elevated panel
 6. Active Flow room view
 7. Saved Rooms view
@@ -709,6 +709,7 @@ Required UI:
 
 Interaction:
 - clicking opens Flow launcher
+- the 3 hardcoded demo starting-point cards on home should bypass the launcher and open their mapped room flow directly
 
 ---
 
@@ -748,7 +749,7 @@ Required UI:
 
 Behavior:
 - one arc preselected using hardcoded mapping
-- user may override before entering room
+- the mapped style remains visible, but in this prototype it should not be overrideable
 
 ---
 
@@ -773,17 +774,19 @@ Important:
 ### Screen 5 — Queue View
 This is required.
 
-The queue should be accessible from the bottom player, similar to a real music platform.
+The queue should stay visible in the room view, similar to a real music platform.
 
 #### Queue UI must show
-- now playing
 - next up list
 - queue changes after steering
+- subtle motion when the queue updates so the change is noticeable without distracting from playback
+- placeholder cards when needed so the visible queue window does not collapse as playback advances
 
 #### Behavior
-After steering, the queue panel should clearly reflect the updated next-up tracks.
+After steering, the queue rail should clearly reflect the updated next-up tracks.
 This is one of the main signals that the room is adapting.
 Playback should advance through the active session queue as tracks finish.
+The visible queue should be a fixed-size window; when the user moves backward, bottom placeholders should disappear as real tracks come back into view.
 
 ---
 
@@ -804,7 +807,7 @@ Behavior:
 - Wrong mood = open follow-up row
 - Wrong energy = open follow-up row
 - natural language always available
-- in this prototype, unsupported steering paths for a given hardcoded demo may remain visible but should be disabled with a muted hint guiding the user to the intended demo path
+- in this prototype, unsupported steering paths for a given hardcoded demo may remain visible but should be disabled with at most one muted hint near the controls guiding the user to the intended demo path
 
 ---
 
@@ -1064,7 +1067,7 @@ Testable outcome:
 
 ### Phase 3 — Queue View + Diagnostic Steering + Natural Language
 Build:
-- queue panel/drawer
+- persistent queue rail
 - universal chips
 - follow-up row for Wrong mood / Wrong energy
 - direct-apply logic for Too familiar / Too different
@@ -1120,7 +1123,7 @@ Testable outcome:
 - room title / arc / pulse visible
 
 ### Phase 3 accepted when
-- queue panel works
+- queue rail works
 - queue changes visibly after steering
 - all 4 diagnostic chips behave correctly
 - natural-language refinement works

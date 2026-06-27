@@ -105,7 +105,7 @@ Use explicit routes so the prototype feels like a real app and is easier to test
   - launcher opens as modal/panel over home
 - `/room/:roomId`
   - active Flow room
-  - includes player shell and queue drawer trigger
+  - includes player shell and persistent queue rail
 - `/rooms`
   - Saved Rooms view
 
@@ -115,10 +115,11 @@ Use explicit routes so the prototype feels like a real app and is easier to test
 - default home shell
 - launcher open
 - arc suggestion step
+- demo starting-point cards can directly create and route into their mapped room session without going through the launcher
 
 #### Room route
 - room active
-- queue drawer open/closed
+- persistent queue rail stays visible while the main room content scrolls
 - adjust room open/closed
 - follow-up steering row visible/hidden
 
@@ -167,14 +168,13 @@ App
           SavedRoomGrid
             SavedRoomCard
       RightRailOptionalSurface
+        QueueRail
+          NextUpList
       BottomPlayerBar
         NowPlayingSummary
         PlaybackControls
         ProgressBar
-        QueueDrawerTrigger
-      QueueDrawer
-        NowPlayingQueueCard
-        NextUpList
+        QueueRailFocusControl
       ToastLayer
 ```
 
@@ -192,6 +192,7 @@ Use one small global store with clear slices.
 - `isLauncherOpen`
 - `launcherStep: "prompt" | "arc"`
 - `isQueueOpen`
+- `queueRevision`
 - `isAdjustRoomOpen`
 - `toast`
 
@@ -303,6 +304,12 @@ type SavedRoomDefinition = {
    - empty or seeded room memory
 7. App routes directly into playback.
 
+### Direct demo-card flow
+For the 3 hardcoded home cards:
+1. User clicks a demo card.
+2. App creates the mapped room immediately using that flow's single hardcoded style.
+3. App routes directly into playback.
+
 ### Steering flow priority
 Apply steering in the exact priority defined by the spec:
 1. natural-language refinement
@@ -315,7 +322,7 @@ Apply steering in the exact priority defined by the spec:
 - `Wrong mood` and `Wrong energy` reveal follow-up options
 - text refinement submits a deterministic queue transition for the current demo flow
 - arc adjustments change room direction at the room level, not just the next song
-- unsupported controls for a given demo flow can stay visible for realism, but should be disabled and paired with muted guidance toward the intended hardcoded path
+- unsupported controls for a given demo flow can stay visible for realism, but should be disabled and paired with a single muted hint near the controls rather than boxed guidance copy
 
 ### Steering write targets
 Every steering action can update:
@@ -334,9 +341,10 @@ Queue mutation should be deterministic, visible, and easy to reason about.
 ### Queue model
 - the room stores `trackQueue: string[]`
 - the current track is derived from `trackQueue[currentTrackIndex]`
-- queue drawer shows:
-  - now playing
-  - next up = remaining queue items after current index
+- the persistent queue rail shows:
+  - a capped next-up window from the remaining queue after the current index
+  - a subtle refresh animation whenever playback advances or steering swaps the queue
+- placeholder cards fill any unused visible queue slots so the rail stays visually stable without permanently mutating the queue
 - when a track finishes, playback advances to the next queued track; if the session reaches the end, it loops back to the start of the current room queue
 
 ### Mutation strategy
@@ -347,7 +355,7 @@ Queue mutation should be deterministic, visible, and easy to reason about.
 
 ### Why replace instead of patch
 - aligns with the spec language that the queue becomes a new set
-- keeps the adaptation obvious in the queue drawer
+- keeps the adaptation obvious in the queue rail
 - reduces logic complexity for the prototype
 
 ### Example mutation sources
@@ -420,7 +428,7 @@ Test:
 - room title, arc, pulse, helper text, and current track render correctly
 
 ### Phase 3
-- build queue drawer
+- build persistent queue rail
 - build diagnostic chips
 - build follow-up option row
 - build natural-language refinement input
@@ -428,7 +436,7 @@ Test:
 - update pulse on steering
 
 Test:
-- steering visibly changes queue drawer contents
+- steering visibly changes queue rail contents
 - all four chip paths behave per spec
 
 ### Phase 4
@@ -473,7 +481,7 @@ Test:
 - launcher flow
 - arc selection and override
 - playback start and now-playing state
-- queue drawer updates
+- queue rail updates
 - pulse changes
 - helper text evolution
 - follow-up steering rows

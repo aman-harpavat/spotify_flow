@@ -18,6 +18,7 @@ const diagnosticChipLabels: Record<DiagnosticChip, string> = {
 
 const moodOptions: FollowUpOption[] = ["happier", "sadder", "softer", "darker"];
 const energyOptions: FollowUpOption[] = ["calmer", "more_energetic", "slower", "faster"];
+const visibleQueueSlots = 5;
 
 type DemoControls = {
   enabledChips: DiagnosticChip[];
@@ -62,6 +63,8 @@ export function RoomView() {
   const { roomId } = useParams();
   const activeRoom = useFlowStore((state) => state.activeRoom);
   const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
+  const queueRevision = useFlowStore((state) => state.queueRevision);
+  const isQueueOpen = useFlowStore((state) => state.isQueueOpen);
   const selectedDiagnosticChip = useFlowStore((state) => state.selectedDiagnosticChip);
   const visibleFollowUpType = useFlowStore((state) => state.visibleFollowUpType);
   const refinementDraft = useFlowStore((state) => state.refinementDraft);
@@ -80,14 +83,18 @@ export function RoomView() {
   const nextUp = activeRoom.trackQueue
     .slice(currentTrackIndex + 1)
     .map((trackId) => trackCatalog[trackId]);
+  const visibleNextUp = nextUp.slice(0, visibleQueueSlots);
+  const queuePlaceholders = Array.from({
+    length: Math.max(visibleQueueSlots - visibleNextUp.length, 0)
+  });
   const handleRefinementSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     submitRefinement();
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6 md:py-8 lg:pr-[360px]">
+      <div className="grid gap-6">
         <section className="rounded-[24px] border border-white/8 bg-gradient-to-b from-white/6 to-transparent p-6 shadow-panel md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -97,7 +104,7 @@ export function RoomView() {
               <h1 className="mt-3 font-spotifyTitle text-4xl font-bold text-white md:text-5xl">
                 {activeRoom.title}
               </h1>
-              <p className="mt-4 max-w-2xl text-sm text-spotify-muted md:text-base">
+              <p className="ui-body mt-4 max-w-2xl">
                 {activeRoom.roomDescription}
               </p>
             </div>
@@ -142,22 +149,22 @@ export function RoomView() {
             </div>
 
             <div className="space-y-5">
-              <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+              <div className="ui-surface p-5">
+                <p className="ui-label">
                   Room feel
                 </p>
                 <p className="mt-3 text-lg font-bold text-white">{activeRoom.helperText}</p>
-                <p className="mt-3 text-sm text-spotify-muted">
+                <p className="ui-body mt-3">
                   Playback starts immediately when you enter. Use the room controls
                   below to steer what comes next.
                 </p>
               </div>
 
-              <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+              <div className="ui-surface p-5">
+                <p className="ui-label">
                   Tune this room
                 </p>
-                <p className="mt-3 text-sm text-spotify-muted">{interactionHint}</p>
+                <p className="ui-hint mt-3">{interactionHint}</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {(
                     Object.keys(diagnosticChipLabels) as DiagnosticChip[]
@@ -190,7 +197,6 @@ export function RoomView() {
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
                       {visibleFollowUpType === "mood" ? "Shift the mood" : "Shift the energy"}
                     </p>
-                    <p className="mt-2 text-sm text-spotify-muted">{interactionHint}</p>
                     <div className="mt-3 flex flex-wrap gap-3">
                       {(visibleFollowUpType === "mood" ? moodOptions : energyOptions).map(
                         (option) => {
@@ -222,7 +228,7 @@ export function RoomView() {
 
                 <form className="mt-5 space-y-3" onSubmit={handleRefinementSubmit}>
                   <label className="block">
-                    <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+                    <span className="ui-label mb-3 block">
                       Refine this room...
                     </span>
                     <input
@@ -238,7 +244,7 @@ export function RoomView() {
                     />
                   </label>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-spotify-muted">{activeRoom.testHint}</p>
+                    <p className="ui-hint">{activeRoom.testHint}</p>
                     <button
                       type="submit"
                       disabled={!demoControls.refinementEnabled}
@@ -257,25 +263,49 @@ export function RoomView() {
           </div>
         </section>
 
-        <aside className="space-y-4">
-          <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5 shadow-panel">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+        <aside className="space-y-4 lg:fixed lg:right-4 lg:top-[88px] lg:z-20 lg:w-[320px] lg:pb-[104px]">
+          <div
+            className={`flex flex-col rounded-[20px] border bg-spotify-surface p-5 shadow-panel transition lg:max-h-[calc(100vh-12rem)] ${
+              isQueueOpen
+                ? "border-spotify-green/35 shadow-[0_0_0_1px_rgba(30,215,96,0.22)]"
+                : "border-white/8"
+            }`}
+          >
+            <p className="ui-label shrink-0">
               Up next
             </p>
-            <div className="mt-4 space-y-3">
-              {nextUp.map((track) => (
+            <div
+              key={queueRevision}
+              className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1"
+            >
+              {visibleNextUp.map((track, index) => (
                 <div
                   key={track.id}
-                  className="flex items-center gap-3 rounded-[16px] bg-white/5 p-3"
+                  className="queue-refresh-item flex items-center gap-3 rounded-[16px] bg-white/5 p-3"
+                  style={{ animationDelay: `${index * 120}ms` }}
                 >
                   <div
                     className={`h-12 w-12 rounded-[10px] bg-gradient-to-br ${track.coverGradient}`}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-white">{track.title}</p>
-                    <p className="truncate text-sm text-spotify-muted">{track.artist}</p>
+                    <p className="ui-muted truncate">{track.artist}</p>
                   </div>
-                  <span className="text-xs text-spotify-muted">{track.duration}</span>
+                  <span className="ui-hint">{track.duration}</span>
+                </div>
+              ))}
+              {queuePlaceholders.map((_, index) => (
+                <div
+                  key={`placeholder-${currentTrackIndex}-${index}`}
+                  className="queue-refresh-item flex items-center gap-3 rounded-[16px] border border-white/6 bg-white/[0.03] p-3"
+                  style={{ animationDelay: `${(visibleNextUp.length + index) * 120}ms` }}
+                >
+                  <div className="h-12 w-12 rounded-[10px] bg-gradient-to-br from-white/12 to-white/[0.03]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-white/52">Loading next picks</p>
+                    <p className="ui-hint truncate">More songs will appear here as the room continues</p>
+                  </div>
+                  <span className="ui-hint">--:--</span>
                 </div>
               ))}
             </div>

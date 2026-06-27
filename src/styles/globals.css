@@ -6,6 +6,16 @@
   color: #ffffff;
   background: #121212;
   font-family: SpotifyMixUI, CircularSp, CircularStd, "Helvetica Neue", Arial, sans-serif;
+  --text-primary: rgba(255, 255, 255, 0.96);
+  --text-secondary: rgba(255, 255, 255, 0.74);
+  --text-muted: rgba(255, 255, 255, 0.46);
+  --text-hint: rgba(255, 255, 255, 0.32);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --label-size: 0.75rem;
+  --body-size: 0.9375rem;
+  --hint-size: 0.75rem;
+  --section-gap: 1.25rem;
 }
 
 html,
@@ -37,4 +47,59 @@ button {
 
 ::selection {
   background: rgba(30, 215, 96, 0.35);
+}
+
+@layer components {
+  .ui-label {
+    font-size: var(--label-size);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .ui-body {
+    font-size: var(--body-size);
+    color: var(--text-secondary);
+  }
+
+  .ui-muted {
+    font-size: var(--body-size);
+    color: var(--text-muted);
+  }
+
+  .ui-hint {
+    font-size: var(--hint-size);
+    color: var(--text-hint);
+  }
+
+  .ui-surface {
+    border: 1px solid var(--border-subtle);
+    background: #1a1a1a;
+    border-radius: 20px;
+  }
+}
+
+@keyframes queueRefresh {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateY(0);
+    background-color: rgba(30, 215, 96, 0.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.queue-refresh-item {
+  animation: queueRefresh 980ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }

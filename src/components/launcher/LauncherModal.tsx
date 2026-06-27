@@ -15,7 +15,6 @@ export function LauncherModal() {
   const closeLauncher = useFlowStore((state) => state.closeLauncher);
   const goBackToPromptStep = useFlowStore((state) => state.goBackToPromptStep);
   const submitLauncher = useFlowStore((state) => state.submitLauncher);
-  const setSelectedArc = useFlowStore((state) => state.setSelectedArc);
   const createActiveRoom = useFlowStore((state) => state.createActiveRoom);
   const [showDemoHint, setShowDemoHint] = useState(false);
 
@@ -53,10 +52,10 @@ export function LauncherModal() {
                 ? "Start a room for this moment"
                 : "Choose how this room should feel"}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm text-spotify-muted md:text-base">
+            <p className="ui-body mt-3 max-w-2xl">
               {launcherStep === "prompt"
                 ? "Start with a quick idea, then pick one of the demo prompts below to open a guided Flow room."
-                : "Flow picked a starting style for this prompt. Keep it, or switch to the one that feels right before playback begins."}
+                : "Flow picked the mapped starting style for this prompt. This demo keeps that style locked so the intended path stays clear."}
             </p>
           </div>
           <button
@@ -72,7 +71,7 @@ export function LauncherModal() {
         {launcherStep === "prompt" ? (
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <label className="block">
-              <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-white/60">
+              <span className="ui-label mb-3 block">
                 What do you want to hear right now?
               </span>
               <button
@@ -89,7 +88,7 @@ export function LauncherModal() {
                   {promptDraft || "\u00A0"}
                 </p>
                 {showDemoHint ? (
-                  <p className="mt-2 text-sm text-white/45">
+                  <p className="ui-hint mt-2">
                     Please select a prompt from below for demo
                   </p>
                 ) : null}
@@ -97,7 +96,7 @@ export function LauncherModal() {
             </label>
 
             <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-white/60">
+              <p className="ui-label mb-3">
                 Pick a demo prompt
               </p>
               <div className="flex flex-wrap gap-3">
@@ -122,13 +121,13 @@ export function LauncherModal() {
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-white/8 bg-spotify-surface p-4">
+            <div className="ui-surface rounded-[22px] p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold text-white">
                     Keep this room separate from my main taste profile
                   </p>
-                  <p className="mt-2 max-w-2xl text-sm text-spotify-muted">{helperText}</p>
+                  <p className="ui-muted mt-2 max-w-2xl">{helperText}</p>
                 </div>
                 <button
                   type="button"
@@ -149,7 +148,7 @@ export function LauncherModal() {
             </div>
 
             <div className="flex flex-col gap-3 border-t border-white/8 pt-5 md:flex-row md:items-center md:justify-between">
-              <p className="text-sm text-spotify-muted">
+              <p className="ui-muted">
                 Select one of the three demo prompts to continue.
               </p>
               <button
@@ -164,7 +163,6 @@ export function LauncherModal() {
           <div className="mt-8">
             <ArcSuggestionStep
               selectedArc={selectedArc}
-              onSelectArc={setSelectedArc}
               onBack={goBackToPromptStep}
               onConfirm={handleEnterRoom}
             />

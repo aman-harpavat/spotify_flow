@@ -7,6 +7,7 @@ describe("flowStore steering", () => {
       isLauncherOpen: false,
       launcherStep: "prompt",
       isQueueOpen: false,
+      queueRevision: 0,
       promptDraft: "",
       selectedStarterPrompt: null,
       keepSeparateProfile: true,
@@ -37,6 +38,7 @@ describe("flowStore steering", () => {
     expect(state.activeRoom?.trackQueue[0]).toBe("lift-off-zedha");
     expect(state.activeRoom?.pulse).toBe("getting_fresher");
     expect(state.isQueueOpen).toBe(true);
+    expect(state.queueRevision).toBe(1);
   });
 
   it("applies text refinement for melodic surprise", () => {
@@ -77,5 +79,20 @@ describe("flowStore steering", () => {
 
     expect(state.isPlaying).toBe(true);
     expect(state.playbackProgressSeconds).toBe(1);
+  });
+
+  it("loops the room queue back to the first track after the last song", () => {
+    useFlowStore.setState({
+      activeRoom: createRoomFromFlow("fresh_workout"),
+      currentTrackIndex: 5,
+      isPlaying: true
+    });
+
+    useFlowStore.getState().playNextTrack();
+
+    const state = useFlowStore.getState();
+
+    expect(state.currentTrackIndex).toBe(0);
+    expect(state.activeRoom?.currentTrackId).toBe("charge-up-nova-run");
   });
 });

@@ -106,7 +106,7 @@ export function BottomPlayer() {
             <button
               type="button"
               onClick={toggleQueue}
-              aria-label={isQueueOpen ? "Hide queue" : "Show queue"}
+              aria-label="Focus queue"
               className={isQueueOpen ? "text-white" : undefined}
             >
               ☰
@@ -138,7 +138,7 @@ export function BottomPlayer() {
             {activeRoom ? arcDisplayNames[activeRoom.arc] : "Preview mix"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
-            {isQueueOpen ? "Queue open" : "Open queue"}
+            Queue
           </span>
         </div>
       </div>

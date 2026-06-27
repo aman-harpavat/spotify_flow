@@ -27,6 +27,7 @@ type FlowStore = {
   isLauncherOpen: boolean;
   launcherStep: LauncherStep;
   isQueueOpen: boolean;
+  queueRevision: number;
   promptDraft: string;
   selectedStarterPrompt: string | null;
   keepSeparateProfile: boolean;
@@ -50,6 +51,7 @@ type FlowStore = {
   setSelectedArc: (value: ArcType) => void;
   submitLauncher: () => { ok: boolean; error?: string };
   goBackToPromptStep: () => void;
+  startDemoRoomFromPrompt: (starterPrompt: string) => { ok: boolean; roomId?: string; error?: string };
   createActiveRoom: () => { ok: boolean; roomId?: string; error?: string };
   togglePlayback: () => void;
   tickPlayback: (trackDurationSeconds: number) => void;
@@ -139,6 +141,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   isLauncherOpen: false,
   launcherStep: "prompt",
   isQueueOpen: false,
+  queueRevision: 0,
   promptDraft: "",
   selectedStarterPrompt: null,
   keepSeparateProfile: true,
@@ -223,6 +226,44 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set({
       launcherStep: "prompt"
     }),
+  startDemoRoomFromPrompt: (starterPrompt) => {
+    const flowId = promptToDemoFlow[starterPrompt];
+
+    if (!flowId) {
+      return {
+        ok: false,
+        error: "Unknown demo prompt"
+      };
+    }
+
+    const suggestedArc = demoFlows[flowId].suggestedArc;
+    const activeRoom = createRoomFromFlow(flowId, suggestedArc);
+
+    set({
+      promptDraft: starterPrompt,
+      selectedStarterPrompt: starterPrompt,
+      suggestedArc,
+      selectedArc: suggestedArc,
+      activeRoom,
+      currentTrackIndex: 0,
+      previewCurrentTrackIndex: 0,
+      isPlaying: true,
+      playbackProgressSeconds: 0,
+      queueRevision: get().queueRevision + 1,
+      isLauncherOpen: false,
+      isQueueOpen: false,
+      launcherStep: "prompt",
+      selectedDiagnosticChip: null,
+      visibleFollowUpType: null,
+      refinementDraft: "",
+      toast: null
+    });
+
+    return {
+      ok: true,
+      roomId: activeRoom.id
+    };
+  },
   createActiveRoom: () => {
     const selectedStarterPrompt = get().selectedStarterPrompt;
     const selectedArc = get().selectedArc;
@@ -243,6 +284,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       previewCurrentTrackIndex: 0,
       isPlaying: true,
       playbackProgressSeconds: 0,
+      queueRevision: get().queueRevision + 1,
       isLauncherOpen: false,
       isQueueOpen: false,
       launcherStep: "prompt",
@@ -282,47 +324,23 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
           previewCurrentTrackIndex: isLastPreviewTrack
             ? 0
             : state.previewCurrentTrackIndex + 1,
-          playbackProgressSeconds: 0
+          playbackProgressSeconds: 0,
+          queueRevision: state.queueRevision + 1
         };
       }
 
       const isLastTrack = state.currentTrackIndex >= state.activeRoom.trackQueue.length - 1;
-
-      if (isLastTrack) {
-        const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
-        const nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
-        const updatedRoom = withUpdatedQueue(state.activeRoom, nextQueue);
-
-        return {
-          activeRoom: {
-            ...updatedRoom,
-            currentTrackId: generatedTrack.id
-          },
-          currentTrackIndex: state.currentTrackIndex + 1,
-          playbackProgressSeconds: 0,
-          isQueueOpen: true
-        };
-      }
-
-      const nextIndex = state.currentTrackIndex + 1;
-      const remainingAfterNext = state.activeRoom.trackQueue.length - (nextIndex + 1);
-      let nextQueue = state.activeRoom.trackQueue;
-
-      if (remainingAfterNext < 1) {
-        const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
-        nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
-      }
-
-      const updatedRoom = withUpdatedQueue(state.activeRoom, nextQueue);
+      const nextIndex = isLastTrack ? 0 : state.currentTrackIndex + 1;
 
       return {
         activeRoom: {
-          ...updatedRoom,
-          currentTrackId: nextQueue[nextIndex]
+          ...state.activeRoom,
+          currentTrackId: state.activeRoom.trackQueue[nextIndex]
         },
         currentTrackIndex: nextIndex,
         playbackProgressSeconds: 0,
-        isQueueOpen: true
+        isQueueOpen: true,
+        queueRevision: state.queueRevision + 1
       };
     }),
   playNextTrack: () =>
@@ -336,37 +354,24 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         return {
           previewCurrentTrackIndex: nextIndex,
           playbackProgressSeconds: 0,
-          isPlaying: true
+          isPlaying: true,
+          queueRevision: state.queueRevision + 1
         };
       }
 
       const isLastTrack = state.currentTrackIndex >= state.activeRoom.trackQueue.length - 1;
-      let nextQueue = state.activeRoom.trackQueue;
-
-      if (isLastTrack) {
-        const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
-        nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
-      } else {
-        const remainingAfterNext = state.activeRoom.trackQueue.length - (state.currentTrackIndex + 2);
-
-        if (remainingAfterNext < 1) {
-          const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
-          nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
-        }
-      }
-
-      const nextIndex = state.currentTrackIndex + 1;
-      const updatedRoom = withUpdatedQueue(state.activeRoom, nextQueue);
+      const nextIndex = isLastTrack ? 0 : state.currentTrackIndex + 1;
 
       return {
         activeRoom: {
-          ...updatedRoom,
-          currentTrackId: nextQueue[nextIndex]
+          ...state.activeRoom,
+          currentTrackId: state.activeRoom.trackQueue[nextIndex]
         },
         currentTrackIndex: nextIndex,
         playbackProgressSeconds: 0,
         isPlaying: true,
-        isQueueOpen: true
+        isQueueOpen: true,
+        queueRevision: state.queueRevision + 1
       };
     }),
   playPreviousTrack: () =>
@@ -392,6 +397,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       return {
         currentTrackIndex: previousIndex,
         playbackProgressSeconds: 0,
+        queueRevision: state.queueRevision + 1,
         activeRoom: {
           ...state.activeRoom,
           currentTrackId: state.activeRoom.trackQueue[previousIndex]
@@ -460,6 +466,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         visibleFollowUpType: null,
         isPlaying: true,
         isQueueOpen: true,
+        queueRevision: state.queueRevision + 1,
         toast: null
       };
     }),
@@ -510,6 +517,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         visibleFollowUpType: null,
         isPlaying: true,
         isQueueOpen: true,
+        queueRevision: state.queueRevision + 1,
         toast: null
       };
     }),
@@ -572,6 +580,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       activeRoom: updatedRoom,
       currentTrackIndex: 0,
       playbackProgressSeconds: 0,
+      queueRevision: state.queueRevision + 1,
       refinementDraft: "",
       isPlaying: true,
       isQueueOpen: true,
