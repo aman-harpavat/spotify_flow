@@ -25,8 +25,16 @@ export function BottomPlayer() {
             <button
               type="button"
               className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-xl text-black"
+              aria-label="Play preview"
             >
-              ▶
+              <svg
+                aria-hidden="true"
+                className="ml-[2px] h-4 w-4"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path d="M3 2.4c0-.78.84-1.26 1.5-.86l8.2 4.96c.63.38.63 1.29 0 1.68L4.5 13.14A1 1 0 0 1 3 12.28V2.4Z" />
+              </svg>
             </button>
             <button type="button">⏭</button>
             <button type="button">☰</button>

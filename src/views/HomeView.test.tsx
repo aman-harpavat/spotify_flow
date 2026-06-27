@@ -29,7 +29,7 @@ describe("HomeView launcher flow", () => {
     await user.click(screen.getByRole("button", { name: /start room/i }));
 
     expect(
-      screen.getByText(/phase 1 captures intent and validates the launcher flow/i)
+      screen.getByText(/select one of the three demo prompts to continue/i)
     ).toBeInTheDocument();
   });
 });

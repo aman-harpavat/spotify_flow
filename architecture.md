@@ -206,6 +206,7 @@ Use one small global store with clear slices.
 - expose only 3 starter prompts
 - each starter prompt maps directly to one fully hardcoded demo flow
 - do not include extra starter prompts without a dedicated end-to-end flow
+- free text entry is disabled for this prototype build; starter selection is the only room-entry path
 
 ### Playback/session state
 - `activeRoomId`
@@ -394,7 +395,7 @@ Example:
 - build home view
 - build Flow entry card
 - build launcher modal
-- build prompt input, 3 starter prompts, and separate-profile toggle
+- build demo prompt message, 3 starter prompts, and separate-profile toggle
 - block empty submit
 
 Test:

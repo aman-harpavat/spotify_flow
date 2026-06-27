@@ -716,7 +716,7 @@ Interaction:
 Required UI:
 - header: `Flow`
 - subheader: `Start a room for this moment`
-- input placeholder: `What do you want to hear right now?`
+- demo input message that makes it clear this prototype uses predefined prompts only
 - starter prompts:
   - Rainy evening Hindi
   - Fresh workout music
@@ -727,7 +727,8 @@ Required UI:
 - CTA: `Start room`
 
 Behavior:
-- prompt text or starter prompt required
+- free text entry is disabled in this prototype
+- user must select one of the predefined demo prompts
 - empty submit blocked
 - expose only starter prompts that map to the 3 fully hardcoded demo flows
 
@@ -960,7 +961,6 @@ This is one of the most important product semantics in the prototype.
 The app must support these state changes:
 - launcher open / close
 - starter selected
-- prompt typed
 - temporary toggle changed
 - arc suggested
 - arc overridden

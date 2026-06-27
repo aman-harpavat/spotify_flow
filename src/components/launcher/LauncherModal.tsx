@@ -1,15 +1,15 @@
-import { FormEvent, useMemo } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { STARTER_PROMPTS, useFlowStore } from "../../app/store/flowStore";
 
 export function LauncherModal() {
   const promptDraft = useFlowStore((state) => state.promptDraft);
   const selectedStarterPrompt = useFlowStore((state) => state.selectedStarterPrompt);
   const keepSeparateProfile = useFlowStore((state) => state.keepSeparateProfile);
-  const setPromptDraft = useFlowStore((state) => state.setPromptDraft);
   const selectStarterPrompt = useFlowStore((state) => state.selectStarterPrompt);
   const toggleSeparateProfile = useFlowStore((state) => state.toggleSeparateProfile);
   const closeLauncher = useFlowStore((state) => state.closeLauncher);
   const submitLauncher = useFlowStore((state) => state.submitLauncher);
+  const [showDemoHint, setShowDemoHint] = useState(false);
 
   const helperText = useMemo(() => {
     if (keepSeparateProfile) {
@@ -36,8 +36,8 @@ export function LauncherModal() {
               Start a room for this moment
             </h2>
             <p className="mt-3 max-w-2xl text-sm text-spotify-muted md:text-base">
-              Tell Flow what you want right now. We&apos;ll turn it into a room built
-              for this moment that you can tune while you listen.
+              Start with a quick idea, then pick one of the demo prompts below to
+              open a guided Flow room.
             </p>
           </div>
           <button
@@ -55,18 +55,30 @@ export function LauncherModal() {
             <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-white/60">
               What do you want to hear right now?
             </span>
-            <textarea
-              value={promptDraft}
-              onChange={(event) => setPromptDraft(event.target.value)}
-              rows={3}
-              placeholder="What do you want to hear right now?"
-              className="w-full resize-none rounded-[22px] border border-white/10 bg-spotify-surfaceAlt px-5 py-4 text-base text-white outline-none transition placeholder:text-spotify-muted focus:border-white/25"
-            />
+            <button
+              type="button"
+              onClick={() => setShowDemoHint(true)}
+              onFocus={() => setShowDemoHint(true)}
+              className="w-full rounded-[22px] border border-white/10 bg-spotify-surfaceAlt px-5 py-4 text-left outline-none transition hover:border-white/20 focus:border-white/25"
+            >
+              <p
+                className={`text-base ${
+                  selectedStarterPrompt ? "text-white" : "text-spotify-muted"
+                }`}
+              >
+                {promptDraft || "\u00A0"}
+              </p>
+              {showDemoHint ? (
+                <p className="mt-2 text-sm text-white/45">
+                  Please select a prompt from below for demo
+                </p>
+              ) : null}
+            </button>
           </label>
 
           <div>
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-white/60">
-              Starter prompts
+              Pick a demo prompt
             </p>
             <div className="flex flex-wrap gap-3">
               {STARTER_PROMPTS.map((prompt) => {
@@ -118,8 +130,7 @@ export function LauncherModal() {
 
           <div className="flex flex-col gap-3 border-t border-white/8 pt-5 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-spotify-muted">
-              Phase 1 captures intent and validates the launcher flow before room
-              creation lands in Phase 2.
+              Select one of the three demo prompts to continue.
             </p>
             <button
               type="submit"

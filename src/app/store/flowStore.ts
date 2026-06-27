@@ -61,18 +61,19 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     })),
   submitLauncher: () => {
     const prompt = get().promptDraft.trim();
+    const selectedStarterPrompt = get().selectedStarterPrompt;
 
-    if (!prompt) {
+    if (!selectedStarterPrompt || !prompt) {
       set({
         toast: {
-          title: "Add a moment",
-          message: "Enter a prompt or choose one of the Flow starters to continue."
+          title: "Choose a demo prompt",
+          message: "Select one of the three predefined Flow prompts to continue."
         }
       });
 
       return {
         ok: false,
-        error: "Prompt is required"
+        error: "Demo prompt is required"
       };
     }
 

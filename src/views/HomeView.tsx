@@ -3,10 +3,21 @@ import { LauncherModal } from "../components/launcher/LauncherModal";
 import { useFlowStore } from "../app/store/flowStore";
 
 const quickCollections = [
-  "Soft-focus evenings",
-  "Discovery arcs",
-  "Fresh rotation",
-  "Saved rooms soon"
+  {
+    title: "Rainy evening Hindi",
+    description: "Soft Hindi songs for a rainy evening.",
+    tone: "bg-gradient-to-br from-[#1d6b5a] to-[#0d2126]"
+  },
+  {
+    title: "Fresh workout music",
+    description: "High-energy picks that feel less familiar.",
+    tone: "bg-gradient-to-br from-[#7c3f62] to-[#1d1622]"
+  },
+  {
+    title: "Surprise me",
+    description: "Something melodic, Indian, and a little unexpected.",
+    tone: "bg-gradient-to-br from-[#83611b] to-[#241f12]"
+  }
 ];
 
 export function HomeView() {
@@ -17,11 +28,11 @@ export function HomeView() {
     <>
       <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
         <div className="flex flex-wrap gap-3">
-          {["All", "Music", "Discovery"].map((pill, index) => (
+          {["All", "Music", "Discovery"].map((pill) => (
             <span
               key={pill}
               className={`inline-flex rounded-pill px-4 py-3 text-sm font-semibold ${
-                index === 0
+                pill === "Music"
                   ? "bg-white text-black"
                   : "bg-white/10 text-white/85"
               }`}
@@ -45,28 +56,18 @@ export function HomeView() {
             </div>
             <span className="text-sm font-semibold text-white/60">Spotify Flow prototype</span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {quickCollections.map((collection, index) => (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {quickCollections.map((collection) => (
               <button
-                key={collection}
+                key={collection.title}
                 type="button"
                 onClick={openLauncher}
                 className="group overflow-hidden rounded-[18px] bg-spotify-surface p-4 text-left shadow-panel transition hover:bg-[#222222]"
               >
-                <div
-                  className={`h-40 rounded-[14px] ${
-                    index === 0
-                      ? "bg-gradient-to-br from-[#1d6b5a] to-[#0d2126]"
-                      : index === 1
-                        ? "bg-gradient-to-br from-[#7c3f62] to-[#1d1622]"
-                        : index === 2
-                          ? "bg-gradient-to-br from-[#83611b] to-[#241f12]"
-                          : "bg-gradient-to-br from-[#364a5c] to-[#161b28]"
-                  }`}
-                />
-                <p className="mt-4 text-lg font-bold text-white">{collection}</p>
+                <div className={`h-40 rounded-[14px] ${collection.tone}`} />
+                <p className="mt-4 text-lg font-bold text-white">{collection.title}</p>
                 <p className="mt-2 text-sm text-spotify-muted">
-                  Open Flow to start a temporary room for this moment.
+                  {collection.description}
                 </p>
                 <span className="mt-4 inline-flex text-sm font-semibold text-white/70 transition group-hover:text-white">
                   Open Flow

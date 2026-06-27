@@ -15,8 +15,8 @@ export function FlowEntryCard({ onOpen }: FlowEntryCardProps) {
           </h2>
           <p className="mt-4 max-w-xl text-base text-[#f6d9e5] md:text-lg">
             Start a room for what you want right now. Explore a vibe, tune it as
-            you listen, and keep your usual recommendations untouched unless you
-            decide to save it.
+            you listen, and keep your usual recommendations feeling familiar
+            while you explore.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
