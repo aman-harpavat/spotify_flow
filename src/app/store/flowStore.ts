@@ -19,6 +19,7 @@ type FlowStore = {
   selectedArc: ArcType | null;
   activeRoom: FlowRoom | null;
   isPlaying: boolean;
+  playbackProgressSeconds: number;
   toast: ToastState;
   openLauncher: () => void;
   closeLauncher: () => void;
@@ -30,6 +31,7 @@ type FlowStore = {
   goBackToPromptStep: () => void;
   createActiveRoom: () => { ok: boolean; roomId?: string; error?: string };
   togglePlayback: () => void;
+  tickPlayback: (trackDurationSeconds: number) => void;
   dismissToast: () => void;
 };
 
@@ -49,6 +51,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   selectedArc: null,
   activeRoom: null,
   isPlaying: false,
+  playbackProgressSeconds: 0,
   toast: null,
   openLauncher: () =>
     set({
@@ -133,6 +136,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set({
       activeRoom,
       isPlaying: true,
+      playbackProgressSeconds: 0,
       isLauncherOpen: false,
       launcherStep: "prompt",
       toast: null
@@ -147,6 +151,19 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set((state) => ({
       isPlaying: !state.isPlaying
     })),
+  tickPlayback: (trackDurationSeconds) =>
+    set((state) => {
+      if (!state.isPlaying) {
+        return state;
+      }
+
+      const nextProgress = Math.min(state.playbackProgressSeconds + 1, trackDurationSeconds);
+
+      return {
+        playbackProgressSeconds: nextProgress,
+        isPlaying: nextProgress >= trackDurationSeconds ? false : state.isPlaying
+      };
+    }),
   dismissToast: () =>
     set({
       toast: null

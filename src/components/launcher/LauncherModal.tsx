@@ -51,12 +51,12 @@ export function LauncherModal() {
             <h2 className="mt-3 font-spotifyTitle text-3xl font-bold text-white md:text-4xl">
               {launcherStep === "prompt"
                 ? "Start a room for this moment"
-                : "Choose your room direction"}
+                : "Choose how this room should feel"}
             </h2>
             <p className="mt-3 max-w-2xl text-sm text-spotify-muted md:text-base">
               {launcherStep === "prompt"
                 ? "Start with a quick idea, then pick one of the demo prompts below to open a guided Flow room."
-                : "Flow found a strong starting arc for this prompt. You can keep it or switch before playback begins."}
+                : "Flow picked a starting style for this prompt. Keep it, or switch to the one that feels right before playback begins."}
             </p>
           </div>
           <button

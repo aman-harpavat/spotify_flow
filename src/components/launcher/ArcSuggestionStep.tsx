@@ -1,4 +1,4 @@
-import { arcLabels } from "../../data/demoRooms";
+import { arcDescriptions, arcDisplayNames } from "../../data/demoRooms";
 import { ArcType } from "../../domain/types";
 
 type ArcSuggestionStepProps = {
@@ -23,15 +23,15 @@ export function ArcSuggestionStep({
           Building your room...
         </p>
         <h3 className="mt-3 font-spotifyTitle text-3xl font-bold text-white">
-          Best fit: {selectedArc ? arcLabels[selectedArc] : "Flow"}
+          Best fit: {selectedArc ? arcDisplayNames[selectedArc] : "Flow"}
         </h3>
         <p className="mt-3 text-sm text-spotify-muted md:text-base">
-          You can switch this anytime. Pick the exploration style that feels right
-          before you enter the room.
+          Choose how this room should move. You can change it later, but this sets
+          the starting feel before playback begins.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="grid gap-3 md:grid-cols-3">
         {arcOptions.map((arc) => {
           const active = selectedArc === arc;
 
@@ -40,13 +40,22 @@ export function ArcSuggestionStep({
               key={arc}
               type="button"
               onClick={() => onSelectArc(arc)}
-              className={`rounded-pill border px-5 py-3 text-sm font-bold transition ${
+              className={`rounded-[20px] border px-5 py-4 text-left transition ${
                 active
                   ? "border-spotify-green bg-spotify-green text-black"
                   : "border-white/10 bg-spotify-surface text-white hover:border-white/25 hover:bg-[#242424]"
               }`}
             >
-              {arcLabels[arc]}
+              <p className="text-sm font-bold uppercase tracking-[0.12em]">
+                {arcDisplayNames[arc]}
+              </p>
+              <p
+                className={`mt-2 text-sm ${
+                  active ? "text-black/80" : "text-spotify-muted"
+                }`}
+              >
+                {arcDescriptions[arc]}
+              </p>
             </button>
           );
         })}
@@ -54,8 +63,8 @@ export function ArcSuggestionStep({
 
       <div className="rounded-[22px] border border-white/8 bg-spotify-surface p-4">
         <p className="text-sm text-spotify-muted">
-          `Deep Dive` stays closer and goes deeper. `Refresh` chases newer-feeling
-          picks. `Surprise Me` opens the room up a bit more.
+          Think of this as choosing the room&apos;s starting style, not locking in a
+          permanent mode.
         </p>
       </div>
 

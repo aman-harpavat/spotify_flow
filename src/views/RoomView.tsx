@@ -1,5 +1,5 @@
 import { Navigate, useParams } from "react-router-dom";
-import { arcLabels, pulseLabels, trackCatalog } from "../data/demoRooms";
+import { arcDisplayNames, pulseLabels, trackCatalog } from "../data/demoRooms";
 import { useFlowStore } from "../app/store/flowStore";
 
 export function RoomView() {
@@ -35,7 +35,7 @@ export function RoomView() {
                 Temporary room
               </span>
               <span className="rounded-pill bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-                {arcLabels[activeRoom.arc]}
+                Style: {arcDisplayNames[activeRoom.arc]}
               </span>
               <span className="rounded-pill bg-spotify-green/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#9bf0b2]">
                 {pulseLabels[activeRoom.pulse]}
@@ -72,7 +72,7 @@ export function RoomView() {
             <div className="space-y-5">
               <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
-                  Room direction
+                  Room feel
                 </p>
                 <p className="mt-3 text-lg font-bold text-white">{activeRoom.helperText}</p>
                 <p className="mt-3 text-sm text-spotify-muted">

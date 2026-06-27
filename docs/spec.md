@@ -737,12 +737,14 @@ Behavior:
 ### Screen 3 — Arc Suggestion
 Required UI:
 - `Building your room…`
-- `Best fit: [Arc Name]`
+- `Best fit: [Room Style]`
 - helper: `You can switch this anytime`
-- arc chips:
-  - Deep Dive
-  - Refresh
-  - Surprise Me
+- 3 room-style choices with plain-language labels and short explanations
+- the 3 choices should be clearly distinguishable at a glance:
+  - one that stays in the current mood
+  - one that brings in newer or fresher releases
+  - one that leans into more unfamiliar songs
+- internal arc terminology may power logic, but the user-facing copy should explain the choice in listener language
 
 Behavior:
 - one arc preselected using hardcoded mapping
@@ -754,7 +756,7 @@ Behavior:
 Required UI:
 - room title
 - temporary/saved badge
-- arc badge
+- room-style badge
 - room pulse
 - helper text
 - current track state
@@ -763,6 +765,7 @@ Required UI:
 
 Important:
 - playback starts immediately
+- bottom player time and progress should visibly advance during playback and pause when playback is paused
 - do not show a playlist-first review screen
 
 ---

@@ -1,12 +1,36 @@
-import { trackCatalog } from "../../data/demoRooms";
-import { arcLabels } from "../../data/demoRooms";
+import { useEffect } from "react";
+import {
+  arcDisplayNames,
+  durationToSeconds,
+  formatPlaybackTime,
+  trackCatalog
+} from "../../data/demoRooms";
 import { useFlowStore } from "../../app/store/flowStore";
 
 export function BottomPlayer() {
   const activeRoom = useFlowStore((state) => state.activeRoom);
   const isPlaying = useFlowStore((state) => state.isPlaying);
   const togglePlayback = useFlowStore((state) => state.togglePlayback);
+  const playbackProgressSeconds = useFlowStore((state) => state.playbackProgressSeconds);
+  const tickPlayback = useFlowStore((state) => state.tickPlayback);
   const currentTrack = activeRoom ? trackCatalog[activeRoom.currentTrackId] : null;
+  const trackDurationSeconds = currentTrack ? durationToSeconds(currentTrack.duration) : 0;
+  const progressRatio =
+    trackDurationSeconds > 0
+      ? Math.min(playbackProgressSeconds / trackDurationSeconds, 1)
+      : 0;
+
+  useEffect(() => {
+    if (!isPlaying || !currentTrack) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      tickPlayback(trackDurationSeconds);
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [currentTrack, isPlaying, tickPlayback, trackDurationSeconds]);
 
   return (
     <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-white/5 bg-black/95 px-3 py-3 backdrop-blur">
@@ -58,11 +82,20 @@ export function BottomPlayer() {
             <button type="button">☰</button>
           </div>
           <div className="flex w-full max-w-[520px] items-center gap-3 text-xs text-spotify-muted">
-            <span>0:00</span>
+            <span>{formatPlaybackTime(playbackProgressSeconds)}</span>
             <div className="h-1 flex-1 rounded-pill bg-white/10">
-              <div className={`h-1 rounded-pill bg-white ${isPlaying ? "w-[18%]" : "w-[4%]"}`} />
+              <div
+                className="h-1 rounded-pill bg-white transition-[width] duration-700 ease-linear"
+                style={{
+                  width: `${Math.max(progressRatio * 100, currentTrack ? 1 : 4)}%`
+                }}
+              />
             </div>
-            <span>{currentTrack?.duration ?? "3:46"}</span>
+            <span>
+              {currentTrack
+                ? formatPlaybackTime(trackDurationSeconds - playbackProgressSeconds)
+                : "3:46"}
+            </span>
           </div>
         </div>
 
@@ -71,7 +104,7 @@ export function BottomPlayer() {
             {activeRoom ? "Now playing from Flow" : "Ready when you are"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
-            {activeRoom ? arcLabels[activeRoom.arc] : "Temporary room"}
+            {activeRoom ? arcDisplayNames[activeRoom.arc] : "Temporary room"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
             Queue in next phase

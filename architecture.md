@@ -202,6 +202,11 @@ Use one small global store with clear slices.
 - `suggestedArc`
 - `selectedArc`
 
+### User-facing naming
+- keep internal `arc` naming in data and logic if helpful
+- use plain-language `room style` phrasing on user-facing surfaces so the choice is understandable without product context
+- make the three styles clearly distinct in copy: same mood, newer/fresher picks, and more unfamiliar songs
+
 ### Launcher prompt scope
 - expose only 3 starter prompts
 - each starter prompt maps directly to one fully hardcoded demo flow
@@ -212,7 +217,7 @@ Use one small global store with clear slices.
 - `activeRoomId`
 - `isPlaying`
 - `currentTrackIndex`
-- `playbackProgressMs`
+- `playbackProgressMs` or seconds-based equivalent for a visibly advancing player bar
 
 ### Room collection state
 - `activeRooms: Record<string, FlowRoom>`

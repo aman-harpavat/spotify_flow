@@ -56,6 +56,6 @@ describe("HomeView launcher flow", () => {
     await user.click(screen.getByRole("button", { name: /start room/i }));
 
     expect(screen.getByText(/building your room/i)).toBeInTheDocument();
-    expect(screen.getByText(/best fit: deep dive/i)).toBeInTheDocument();
+    expect(screen.getByText(/best fit: stay in the mood/i)).toBeInTheDocument();
   });
 });

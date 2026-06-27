@@ -268,9 +268,35 @@ export const arcLabels: Record<ArcType, string> = {
   surprise_me: "Surprise Me"
 };
 
+export const arcDisplayNames: Record<ArcType, string> = {
+  deep_dive: "Stay in the mood",
+  refresh: "Freshen it up",
+  surprise_me: "Take me somewhere new"
+};
+
+export const arcDescriptions: Record<ArcType, string> = {
+  deep_dive: "Keeps the same overall feel and digs further into it.",
+  refresh: "Keeps the energy, but pulls in newer releases and fresher picks.",
+  surprise_me: "Leans toward more unfamiliar songs while still fitting your vibe."
+};
+
 export const pulseLabels: Record<PulseState, string> = {
   staying_close: "Starts with your vibe",
   getting_fresher: "Getting fresher",
   going_deeper: "Going deeper",
   pulling_back: "Pulling back"
 };
+
+export function durationToSeconds(duration: string): number {
+  const [minutes, seconds] = duration.split(":").map(Number);
+
+  return minutes * 60 + seconds;
+}
+
+export function formatPlaybackTime(totalSeconds: number): string {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
