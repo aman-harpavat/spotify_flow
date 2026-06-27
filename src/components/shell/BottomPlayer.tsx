@@ -46,8 +46,8 @@ export function BottomPlayer() {
 
   return (
     <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-white/5 bg-black/95 px-3 py-3 backdrop-blur">
-      <div className="flex flex-col gap-4 rounded-[16px] bg-black text-white md:flex-row md:items-center md:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="grid grid-cols-1 gap-4 rounded-[16px] bg-black text-white md:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_220px] md:items-center md:gap-6">
+        <div className="flex min-w-0 items-center gap-3 md:w-full">
           <div
             className={`h-14 w-14 rounded-[6px] bg-gradient-to-br ${
               currentTrack?.coverGradient ?? "from-[#f7a55e] via-[#c96485] to-[#43305c]"
@@ -67,7 +67,7 @@ export function BottomPlayer() {
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col items-center gap-3">
+        <div className="flex min-w-0 flex-col items-center gap-3 md:w-full">
           <div className="flex items-center gap-5 text-xl text-spotify-muted">
             <button type="button">↺</button>
             <button
@@ -130,12 +130,9 @@ export function BottomPlayer() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end md:self-auto">
+        <div className="flex items-center justify-end gap-2 self-end md:w-full md:self-auto">
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
             {activeRoom ? "Now playing from Flow" : "Ready when you are"}
-          </span>
-          <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
-            {activeRoom ? arcDisplayNames[activeRoom.arc] : "Preview mix"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
             Queue

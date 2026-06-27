@@ -263,7 +263,7 @@ export function RoomView() {
           </div>
         </section>
 
-        <aside className="space-y-4 lg:fixed lg:right-4 lg:top-[88px] lg:z-20 lg:w-[320px] lg:pb-[104px]">
+        <aside className="space-y-4 lg:fixed lg:right-4 lg:top-[104px] lg:z-20 lg:w-[320px] lg:pb-[104px]">
           <div
             className={`flex flex-col rounded-[20px] border bg-spotify-surface p-5 shadow-panel transition lg:max-h-[calc(100vh-12rem)] ${
               isQueueOpen
