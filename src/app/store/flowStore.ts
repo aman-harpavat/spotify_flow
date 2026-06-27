@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import {
+  createGeneratedDemoTrack,
   createRoomFromFlow,
   demoFlows,
   promptToDemoFlow,
+  previewQueue,
   steeringSnapshots,
   trackCatalog
 } from "../../data/demoRooms";
@@ -32,6 +34,7 @@ type FlowStore = {
   selectedArc: ArcType | null;
   activeRoom: FlowRoom | null;
   currentTrackIndex: number;
+  previewCurrentTrackIndex: number;
   isPlaying: boolean;
   playbackProgressSeconds: number;
   selectedDiagnosticChip: DiagnosticChip | null;
@@ -56,6 +59,7 @@ type FlowStore = {
   applyFollowUpOption: (option: FollowUpOption) => void;
   setRefinementDraft: (value: string) => void;
   submitRefinement: () => { ok: boolean; error?: string };
+  getInteractionHint: () => string | null;
   dismissToast: () => void;
 };
 
@@ -84,6 +88,47 @@ function mergeMemory(room: FlowRoom, memory?: Partial<FlowRoom["memory"]>): Flow
   };
 }
 
+function getAllowedControls(room: FlowRoom) {
+  switch (room.demoFlow) {
+    case "rainy_evening":
+      return {
+        enabledChips: ["wrong_mood"] as DiagnosticChip[],
+        enabledMoodOptions: ["softer"] as FollowUpOption[],
+        enabledEnergyOptions: [] as FollowUpOption[],
+        refinementEnabled: false,
+        hint: "This demo flow is tuned for Wrong mood → Softer."
+      };
+    case "fresh_workout":
+      return {
+        enabledChips: ["too_familiar"] as DiagnosticChip[],
+        enabledMoodOptions: [] as FollowUpOption[],
+        enabledEnergyOptions: [] as FollowUpOption[],
+        refinementEnabled: false,
+        hint: "This demo flow is tuned for Too familiar."
+      };
+    case "melodic_surprise":
+      return {
+        enabledChips: ["too_different"] as DiagnosticChip[],
+        enabledMoodOptions: [] as FollowUpOption[],
+        enabledEnergyOptions: [] as FollowUpOption[],
+        refinementEnabled: true,
+        hint: "This demo flow is tuned for Too different and text refinement."
+      };
+  }
+}
+
+function getCurrentQueue(state: FlowStore): string[] {
+  return state.activeRoom ? state.activeRoom.trackQueue : [...previewQueue];
+}
+
+function getCurrentTrackId(state: FlowStore): string | null {
+  if (state.activeRoom) {
+    return state.activeRoom.trackQueue[state.currentTrackIndex] ?? null;
+  }
+
+  return previewQueue[state.previewCurrentTrackIndex] ?? null;
+}
+
 export const STARTER_PROMPTS = [
   "Rainy evening Hindi",
   "Fresh workout music",
@@ -101,6 +146,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   selectedArc: null,
   activeRoom: null,
   currentTrackIndex: 0,
+  previewCurrentTrackIndex: 0,
   isPlaying: false,
   playbackProgressSeconds: 0,
   selectedDiagnosticChip: null,
@@ -194,6 +240,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set({
       activeRoom,
       currentTrackIndex: 0,
+      previewCurrentTrackIndex: 0,
       isPlaying: true,
       playbackProgressSeconds: 0,
       isLauncherOpen: false,
@@ -216,7 +263,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     })),
   tickPlayback: (trackDurationSeconds) =>
     set((state) => {
-      if (!state.isPlaying || !state.activeRoom) {
+      if (!state.isPlaying) {
         return state;
       }
 
@@ -228,58 +275,119 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         };
       }
 
-      const isLastTrack = state.currentTrackIndex >= state.activeRoom.trackQueue.length - 1;
+      if (!state.activeRoom) {
+        const isLastPreviewTrack = state.previewCurrentTrackIndex >= previewQueue.length - 1;
 
-      if (isLastTrack) {
         return {
-          currentTrackIndex: 0,
-          playbackProgressSeconds: 0,
-          activeRoom: {
-            ...state.activeRoom,
-            currentTrackId: state.activeRoom.trackQueue[0]
-          }
+          previewCurrentTrackIndex: isLastPreviewTrack
+            ? 0
+            : state.previewCurrentTrackIndex + 1,
+          playbackProgressSeconds: 0
         };
       }
 
+      const isLastTrack = state.currentTrackIndex >= state.activeRoom.trackQueue.length - 1;
+
+      if (isLastTrack) {
+        const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
+        const nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
+        const updatedRoom = withUpdatedQueue(state.activeRoom, nextQueue);
+
+        return {
+          activeRoom: {
+            ...updatedRoom,
+            currentTrackId: generatedTrack.id
+          },
+          currentTrackIndex: state.currentTrackIndex + 1,
+          playbackProgressSeconds: 0,
+          isQueueOpen: true
+        };
+      }
+
+      const nextIndex = state.currentTrackIndex + 1;
+      const remainingAfterNext = state.activeRoom.trackQueue.length - (nextIndex + 1);
+      let nextQueue = state.activeRoom.trackQueue;
+
+      if (remainingAfterNext < 1) {
+        const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
+        nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
+      }
+
+      const updatedRoom = withUpdatedQueue(state.activeRoom, nextQueue);
+
       return {
-        currentTrackIndex: state.currentTrackIndex + 1,
-        playbackProgressSeconds: 0,
         activeRoom: {
-          ...state.activeRoom,
-          currentTrackId: state.activeRoom.trackQueue[state.currentTrackIndex + 1]
-        }
+          ...updatedRoom,
+          currentTrackId: nextQueue[nextIndex]
+        },
+        currentTrackIndex: nextIndex,
+        playbackProgressSeconds: 0,
+        isQueueOpen: true
       };
     }),
   playNextTrack: () =>
     set((state) => {
       if (!state.activeRoom) {
-        return state;
+        const nextIndex =
+          state.previewCurrentTrackIndex >= previewQueue.length - 1
+            ? 0
+            : state.previewCurrentTrackIndex + 1;
+
+        return {
+          previewCurrentTrackIndex: nextIndex,
+          playbackProgressSeconds: 0,
+          isPlaying: true
+        };
       }
 
-      const nextIndex =
-        state.currentTrackIndex >= state.activeRoom.trackQueue.length - 1
-          ? 0
-          : state.currentTrackIndex + 1;
+      const isLastTrack = state.currentTrackIndex >= state.activeRoom.trackQueue.length - 1;
+      let nextQueue = state.activeRoom.trackQueue;
+
+      if (isLastTrack) {
+        const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
+        nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
+      } else {
+        const remainingAfterNext = state.activeRoom.trackQueue.length - (state.currentTrackIndex + 2);
+
+        if (remainingAfterNext < 1) {
+          const generatedTrack = createGeneratedDemoTrack(state.activeRoom.demoFlow);
+          nextQueue = [...state.activeRoom.trackQueue, generatedTrack.id];
+        }
+      }
+
+      const nextIndex = state.currentTrackIndex + 1;
+      const updatedRoom = withUpdatedQueue(state.activeRoom, nextQueue);
 
       return {
+        activeRoom: {
+          ...updatedRoom,
+          currentTrackId: nextQueue[nextIndex]
+        },
         currentTrackIndex: nextIndex,
         playbackProgressSeconds: 0,
-        activeRoom: {
-          ...state.activeRoom,
-          currentTrackId: state.activeRoom.trackQueue[nextIndex]
-        }
+        isPlaying: true,
+        isQueueOpen: true
       };
     }),
   playPreviousTrack: () =>
     set((state) => {
       if (!state.activeRoom) {
+        if (state.previewCurrentTrackIndex <= 0) {
+          return state;
+        }
+
+        return {
+          previewCurrentTrackIndex: state.previewCurrentTrackIndex - 1,
+          playbackProgressSeconds: 0,
+          isPlaying: true
+        };
+      }
+
+      if (state.currentTrackIndex <= 0) {
         return state;
       }
 
-      const previousIndex =
-        state.currentTrackIndex <= 0
-          ? state.activeRoom.trackQueue.length - 1
-          : state.currentTrackIndex - 1;
+      const previousIndex = state.currentTrackIndex - 1;
 
       return {
         currentTrackIndex: previousIndex,
@@ -309,6 +417,17 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
           selectedDiagnosticChip: chip,
           visibleFollowUpType: "energy",
           toast: null
+        };
+      }
+
+      const allowedControls = getAllowedControls(state.activeRoom);
+
+      if (!allowedControls.enabledChips.includes(chip)) {
+        return {
+          toast: {
+            title: "Try the guided option",
+            message: allowedControls.hint
+          }
         };
       }
 
@@ -351,6 +470,20 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       }
 
       const snapshot = steeringSnapshots[state.activeRoom.demoFlow]?.[option];
+      const allowedControls = getAllowedControls(state.activeRoom);
+      const allowedOptions =
+        state.visibleFollowUpType === "mood"
+          ? allowedControls.enabledMoodOptions
+          : allowedControls.enabledEnergyOptions;
+
+      if (!allowedOptions.includes(option)) {
+        return {
+          toast: {
+            title: "Try the guided option",
+            message: allowedControls.hint
+          }
+        };
+      }
 
       if (!snapshot) {
         return {
@@ -395,6 +528,22 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       };
     }
 
+    const allowedControls = getAllowedControls(activeRoom);
+
+    if (!allowedControls.refinementEnabled) {
+      set({
+        toast: {
+          title: "Try the guided option",
+          message: allowedControls.hint
+        }
+      });
+
+      return {
+        ok: false,
+        error: "Text refinement is not active for this demo flow"
+      };
+    }
+
     const snapshot = steeringSnapshots[activeRoom.demoFlow]?.nl_refine;
 
     if (!snapshot) {
@@ -432,6 +581,15 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     return {
       ok: true
     };
+  },
+  getInteractionHint: () => {
+    const activeRoom = get().activeRoom;
+
+    if (!activeRoom) {
+      return null;
+    }
+
+    return getAllowedControls(activeRoom).hint;
   },
   dismissToast: () =>
     set({

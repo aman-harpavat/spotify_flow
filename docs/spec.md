@@ -804,6 +804,7 @@ Behavior:
 - Wrong mood = open follow-up row
 - Wrong energy = open follow-up row
 - natural language always available
+- in this prototype, unsupported steering paths for a given hardcoded demo may remain visible but should be disabled with a muted hint guiding the user to the intended demo path
 
 ---
 

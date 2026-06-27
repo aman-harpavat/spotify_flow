@@ -31,7 +31,40 @@ type QueueSnapshot = {
   memory?: Partial<RoomMemory>;
 };
 
-const trackCatalogEntries: Track[] = [
+type DemoTrackSeed = {
+  id: string;
+  title: string;
+  artist: string;
+  duration: string;
+  coverGradient: string;
+  tags: string[];
+};
+
+const trackCatalogEntries: DemoTrackSeed[] = [
+  {
+    id: "preview-night-bloom",
+    title: "Night Bloom",
+    artist: "Flow Preview",
+    duration: "3:36",
+    coverGradient: "from-[#6a5bb0] via-[#3a2e6a] to-[#15111b]",
+    tags: ["preview", "mood"]
+  },
+  {
+    id: "preview-city-lights",
+    title: "City Lights",
+    artist: "Flow Preview",
+    duration: "3:22",
+    coverGradient: "from-[#4a7ca6] via-[#264056] to-[#12161c]",
+    tags: ["preview", "night"]
+  },
+  {
+    id: "preview-soft-static",
+    title: "Soft Static",
+    artist: "Flow Preview",
+    duration: "3:44",
+    coverGradient: "from-[#7a6a4c] via-[#463621] to-[#17120f]",
+    tags: ["preview", "soft"]
+  },
   {
     id: "shaam-aisha-khan",
     title: "Shaam",
@@ -394,7 +427,39 @@ const trackCatalogEntries: Track[] = [
   }
 ];
 
-export const trackCatalog = Object.fromEntries(trackCatalogEntries.map((track) => [track.id, track]));
+export const trackCatalog = Object.fromEntries(
+  trackCatalogEntries.map((track) => [track.id, track as Track])
+) as Record<string, Track>;
+
+export const previewQueue = [
+  "preview-night-bloom",
+  "preview-city-lights",
+  "preview-soft-static"
+] as const;
+
+let generatedDemoTrackCount = 0;
+
+export function createGeneratedDemoTrack(flowId: DemoFlowKey): Track {
+  generatedDemoTrackCount += 1;
+
+  const track: Track = {
+    id: `demo-loader-${flowId}-${generatedDemoTrackCount}`,
+    title: `Demo pick ${generatedDemoTrackCount}`,
+    artist: "Loading next picks",
+    duration: "3:30",
+    coverGradient:
+      flowId === "fresh_workout"
+        ? "from-[#9f5428] via-[#5c241c] to-[#170d10]"
+        : flowId === "melodic_surprise"
+          ? "from-[#5f73a7] via-[#2e3860] to-[#11131b]"
+          : "from-[#4b7b7e] via-[#274347] to-[#111516]",
+    tags: ["demo", "loading"]
+  };
+
+  trackCatalog[track.id] = track;
+
+  return track;
+}
 
 const emptyMemory = (): RoomMemory => ({
   skippedTrackIds: [],

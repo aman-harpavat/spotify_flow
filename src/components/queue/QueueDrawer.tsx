@@ -67,7 +67,7 @@ export function QueueDrawer() {
           <span className="text-xs text-spotify-muted">{nextUp.length} tracks</span>
         </div>
         <div className="space-y-3">
-          {nextUp.map((track, index) => (
+          {nextUp.map((track) => (
             <div
               key={track.id}
               className="flex items-center gap-3 rounded-[16px] bg-white/5 p-3"
@@ -76,9 +76,7 @@ export function QueueDrawer() {
                 className={`h-12 w-12 rounded-[10px] bg-gradient-to-br ${track.coverGradient}`}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-white">
-                  {currentTrackIndex + index + 2}. {track.title}
-                </p>
+                <p className="truncate text-sm font-bold text-white">{track.title}</p>
                 <p className="truncate text-sm text-spotify-muted">{track.artist}</p>
               </div>
               <span className="text-xs text-spotify-muted">{track.duration}</span>

@@ -19,11 +19,49 @@ const diagnosticChipLabels: Record<DiagnosticChip, string> = {
 const moodOptions: FollowUpOption[] = ["happier", "sadder", "softer", "darker"];
 const energyOptions: FollowUpOption[] = ["calmer", "more_energetic", "slower", "faster"];
 
+type DemoControls = {
+  enabledChips: DiagnosticChip[];
+  enabledMoodOptions: FollowUpOption[];
+  enabledEnergyOptions: FollowUpOption[];
+  refinementEnabled: boolean;
+  hint: string;
+};
+
+function getDemoControls(
+  flowId: "rainy_evening" | "fresh_workout" | "melodic_surprise"
+): DemoControls {
+  switch (flowId) {
+    case "rainy_evening":
+      return {
+        enabledChips: ["wrong_mood"],
+        enabledMoodOptions: ["softer"],
+        enabledEnergyOptions: [],
+        refinementEnabled: false,
+        hint: "For this demo, try Wrong mood and then Softer."
+      };
+    case "fresh_workout":
+      return {
+        enabledChips: ["too_familiar"],
+        enabledMoodOptions: [],
+        enabledEnergyOptions: [],
+        refinementEnabled: false,
+        hint: "For this demo, try Too familiar."
+      };
+    case "melodic_surprise":
+      return {
+        enabledChips: ["too_different"],
+        enabledMoodOptions: [],
+        enabledEnergyOptions: [],
+        refinementEnabled: true,
+        hint: "For this demo, try Too different, then use text refine."
+      };
+  }
+}
+
 export function RoomView() {
   const { roomId } = useParams();
   const activeRoom = useFlowStore((state) => state.activeRoom);
   const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
-  const toggleQueue = useFlowStore((state) => state.toggleQueue);
   const selectedDiagnosticChip = useFlowStore((state) => state.selectedDiagnosticChip);
   const visibleFollowUpType = useFlowStore((state) => state.visibleFollowUpType);
   const refinementDraft = useFlowStore((state) => state.refinementDraft);
@@ -31,11 +69,13 @@ export function RoomView() {
   const applyFollowUpOption = useFlowStore((state) => state.applyFollowUpOption);
   const setRefinementDraft = useFlowStore((state) => state.setRefinementDraft);
   const submitRefinement = useFlowStore((state) => state.submitRefinement);
+  const interactionHint = useFlowStore((state) => state.getInteractionHint());
 
   if (!activeRoom || activeRoom.id !== roomId) {
     return <Navigate to="/" replace />;
   }
 
+  const demoControls = getDemoControls(activeRoom.demoFlow);
   const currentTrack = trackCatalog[activeRoom.currentTrackId];
   const nextUp = activeRoom.trackQueue
     .slice(currentTrackIndex + 1)
@@ -114,45 +154,29 @@ export function RoomView() {
               </div>
 
               <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
-                      Queue access
-                    </p>
-                    <p className="mt-2 text-sm text-spotify-muted">
-                      Open the queue to see the currently playing track and how the
-                      next-up list changes as you steer.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={toggleQueue}
-                    className="rounded-pill border border-white/10 px-4 py-2 text-sm font-bold text-white/85 transition hover:border-white/25 hover:bg-white/5"
-                  >
-                    Queue
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
                   Tune this room
                 </p>
+                <p className="mt-3 text-sm text-spotify-muted">{interactionHint}</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {(
                     Object.keys(diagnosticChipLabels) as DiagnosticChip[]
                   ).map((chip) => {
                     const active = selectedDiagnosticChip === chip;
+                    const enabled = demoControls.enabledChips.includes(chip);
 
                     return (
                       <button
                         key={chip}
                         type="button"
-                        onClick={() => selectDiagnosticChip(chip)}
+                        onClick={() => enabled && selectDiagnosticChip(chip)}
+                        disabled={!enabled}
                         className={`rounded-pill border px-4 py-2 text-sm font-bold transition ${
                           active
                             ? "border-spotify-green bg-spotify-green text-black"
-                            : "border-white/10 bg-white/5 text-white hover:border-white/25 hover:bg-white/10"
+                            : enabled
+                              ? "border-white/10 bg-white/5 text-white hover:border-white/25 hover:bg-white/10"
+                              : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/35"
                         }`}
                       >
                         {diagnosticChipLabels[chip]}
@@ -166,18 +190,31 @@ export function RoomView() {
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
                       {visibleFollowUpType === "mood" ? "Shift the mood" : "Shift the energy"}
                     </p>
+                    <p className="mt-2 text-sm text-spotify-muted">{interactionHint}</p>
                     <div className="mt-3 flex flex-wrap gap-3">
                       {(visibleFollowUpType === "mood" ? moodOptions : energyOptions).map(
-                        (option) => (
+                        (option) => {
+                          const enabled =
+                            visibleFollowUpType === "mood"
+                              ? demoControls.enabledMoodOptions.includes(option)
+                              : demoControls.enabledEnergyOptions.includes(option);
+
+                          return (
                           <button
                             key={option}
                             type="button"
-                            onClick={() => applyFollowUpOption(option)}
-                            className="rounded-pill border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:border-white/25 hover:bg-white/10"
+                            onClick={() => enabled && applyFollowUpOption(option)}
+                            disabled={!enabled}
+                            className={`rounded-pill border px-4 py-2 text-sm font-bold transition ${
+                              enabled
+                                ? "border-white/10 bg-white/5 text-white hover:border-white/25 hover:bg-white/10"
+                                : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/35"
+                            }`}
                           >
                             {followUpLabels[option]}
                           </button>
-                        )
+                          );
+                        }
                       )}
                     </div>
                   </div>
@@ -192,14 +229,24 @@ export function RoomView() {
                       value={refinementDraft}
                       onChange={(event) => setRefinementDraft(event.target.value)}
                       placeholder="Try: more emotional, less noisy"
-                      className="w-full rounded-pill border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/25"
+                      disabled={!demoControls.refinementEnabled}
+                      className={`w-full rounded-pill border px-4 py-3 text-sm outline-none transition placeholder:text-white/35 ${
+                        demoControls.refinementEnabled
+                          ? "border-white/10 bg-white/5 text-white focus:border-white/25"
+                          : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/35"
+                      }`}
                     />
                   </label>
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm text-spotify-muted">{activeRoom.testHint}</p>
                     <button
                       type="submit"
-                      className="rounded-pill bg-spotify-green px-4 py-2 text-sm font-bold text-black transition hover:scale-[1.02]"
+                      disabled={!demoControls.refinementEnabled}
+                      className={`rounded-pill px-4 py-2 text-sm font-bold transition ${
+                        demoControls.refinementEnabled
+                          ? "bg-spotify-green text-black hover:scale-[1.02]"
+                          : "cursor-not-allowed bg-white/10 text-white/35"
+                      }`}
                     >
                       Apply
                     </button>
@@ -216,7 +263,7 @@ export function RoomView() {
               Up next
             </p>
             <div className="mt-4 space-y-3">
-              {nextUp.map((track, index) => (
+              {nextUp.map((track) => (
                 <div
                   key={track.id}
                   className="flex items-center gap-3 rounded-[16px] bg-white/5 p-3"
@@ -225,9 +272,7 @@ export function RoomView() {
                     className={`h-12 w-12 rounded-[10px] bg-gradient-to-br ${track.coverGradient}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-white">
-                      {index + 2}. {track.title}
-                    </p>
+                    <p className="truncate text-sm font-bold text-white">{track.title}</p>
                     <p className="truncate text-sm text-spotify-muted">{track.artist}</p>
                   </div>
                   <span className="text-xs text-spotify-muted">{track.duration}</span>

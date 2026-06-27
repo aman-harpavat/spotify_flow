@@ -315,6 +315,7 @@ Apply steering in the exact priority defined by the spec:
 - `Wrong mood` and `Wrong energy` reveal follow-up options
 - text refinement submits a deterministic queue transition for the current demo flow
 - arc adjustments change room direction at the room level, not just the next song
+- unsupported controls for a given demo flow can stay visible for realism, but should be disabled and paired with muted guidance toward the intended hardcoded path
 
 ### Steering write targets
 Every steering action can update:

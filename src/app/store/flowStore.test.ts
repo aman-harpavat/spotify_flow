@@ -14,6 +14,7 @@ describe("flowStore steering", () => {
       selectedArc: null,
       activeRoom: null,
       currentTrackIndex: 0,
+      previewCurrentTrackIndex: 0,
       isPlaying: false,
       playbackProgressSeconds: 0,
       selectedDiagnosticChip: null,
@@ -51,5 +52,30 @@ describe("flowStore steering", () => {
     expect(result.ok).toBe(true);
     expect(state.activeRoom?.trackQueue[0]).toBe("safar-dheema-samar");
     expect(state.refinementDraft).toBe("");
+  });
+
+  it("does not move previous before the first room track", () => {
+    useFlowStore.setState({
+      activeRoom: createRoomFromFlow("rainy_evening"),
+      currentTrackIndex: 0,
+      isPlaying: true
+    });
+
+    useFlowStore.getState().playPreviousTrack();
+
+    const state = useFlowStore.getState();
+
+    expect(state.currentTrackIndex).toBe(0);
+    expect(state.activeRoom?.currentTrackId).toBe("shaam-aisha-khan");
+  });
+
+  it("supports playback when no room is active", () => {
+    useFlowStore.getState().togglePlayback();
+    useFlowStore.getState().tickPlayback(216);
+
+    const state = useFlowStore.getState();
+
+    expect(state.isPlaying).toBe(true);
+    expect(state.playbackProgressSeconds).toBe(1);
   });
 });

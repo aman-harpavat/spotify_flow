@@ -3,12 +3,15 @@ import {
   arcDisplayNames,
   durationToSeconds,
   formatPlaybackTime,
+  previewQueue,
   trackCatalog
 } from "../../data/demoRooms";
 import { useFlowStore } from "../../app/store/flowStore";
 
 export function BottomPlayer() {
   const activeRoom = useFlowStore((state) => state.activeRoom);
+  const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
+  const previewCurrentTrackIndex = useFlowStore((state) => state.previewCurrentTrackIndex);
   const isPlaying = useFlowStore((state) => state.isPlaying);
   const togglePlayback = useFlowStore((state) => state.togglePlayback);
   const playbackProgressSeconds = useFlowStore((state) => state.playbackProgressSeconds);
@@ -17,12 +20,17 @@ export function BottomPlayer() {
   const playPreviousTrack = useFlowStore((state) => state.playPreviousTrack);
   const toggleQueue = useFlowStore((state) => state.toggleQueue);
   const isQueueOpen = useFlowStore((state) => state.isQueueOpen);
-  const currentTrack = activeRoom ? trackCatalog[activeRoom.currentTrackId] : null;
+  const currentTrack = activeRoom
+    ? trackCatalog[activeRoom.currentTrackId]
+    : trackCatalog[previewQueue[previewCurrentTrackIndex]];
   const trackDurationSeconds = currentTrack ? durationToSeconds(currentTrack.duration) : 0;
   const progressRatio =
     trackDurationSeconds > 0
       ? Math.min(playbackProgressSeconds / trackDurationSeconds, 1)
       : 0;
+  const previousDisabled = activeRoom
+    ? currentTrackIndex <= 0
+    : previewCurrentTrackIndex <= 0;
 
   useEffect(() => {
     if (!isPlaying || !currentTrack) {
@@ -50,9 +58,11 @@ export function BottomPlayer() {
               {currentTrack ? currentTrack.title : "Flow preview"}
             </p>
             <p className="truncate text-sm text-spotify-muted">
-              {currentTrack
-                ? `${currentTrack.artist} • ${activeRoom?.title}`
-                : "Build a room to start playback"}
+              {activeRoom && currentTrack
+                ? `${currentTrack.artist} • ${activeRoom.title}`
+                : currentTrack
+                  ? `${currentTrack.artist} • Preview mix`
+                  : "Build a room to start playback"}
             </p>
           </div>
         </div>
@@ -60,7 +70,13 @@ export function BottomPlayer() {
         <div className="flex flex-1 flex-col items-center gap-3">
           <div className="flex items-center gap-5 text-xl text-spotify-muted">
             <button type="button">↺</button>
-            <button type="button" onClick={playPreviousTrack} aria-label="Previous track">
+            <button
+              type="button"
+              onClick={playPreviousTrack}
+              aria-label="Previous track"
+              disabled={previousDisabled}
+              className={previousDisabled ? "cursor-not-allowed opacity-35" : undefined}
+            >
               ⏮
             </button>
             <button
@@ -119,7 +135,7 @@ export function BottomPlayer() {
             {activeRoom ? "Now playing from Flow" : "Ready when you are"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
-            {activeRoom ? arcDisplayNames[activeRoom.arc] : "Temporary room"}
+            {activeRoom ? arcDisplayNames[activeRoom.arc] : "Preview mix"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
             {isQueueOpen ? "Queue open" : "Open queue"}
