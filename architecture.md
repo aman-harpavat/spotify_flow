@@ -336,6 +336,7 @@ Queue mutation should be deterministic, visible, and easy to reason about.
 - queue drawer shows:
   - now playing
   - next up = remaining queue items after current index
+- when a track finishes, playback advances to the next queued track; if the session reaches the end, it loops back to the start of the current room queue
 
 ### Mutation strategy
 - each meaningful steering action resolves to a named `QueueSnapshot`

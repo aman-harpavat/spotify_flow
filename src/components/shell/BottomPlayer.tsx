@@ -13,6 +13,10 @@ export function BottomPlayer() {
   const togglePlayback = useFlowStore((state) => state.togglePlayback);
   const playbackProgressSeconds = useFlowStore((state) => state.playbackProgressSeconds);
   const tickPlayback = useFlowStore((state) => state.tickPlayback);
+  const playNextTrack = useFlowStore((state) => state.playNextTrack);
+  const playPreviousTrack = useFlowStore((state) => state.playPreviousTrack);
+  const toggleQueue = useFlowStore((state) => state.toggleQueue);
+  const isQueueOpen = useFlowStore((state) => state.isQueueOpen);
   const currentTrack = activeRoom ? trackCatalog[activeRoom.currentTrackId] : null;
   const trackDurationSeconds = currentTrack ? durationToSeconds(currentTrack.duration) : 0;
   const progressRatio =
@@ -56,7 +60,9 @@ export function BottomPlayer() {
         <div className="flex flex-1 flex-col items-center gap-3">
           <div className="flex items-center gap-5 text-xl text-spotify-muted">
             <button type="button">↺</button>
-            <button type="button">⏮</button>
+            <button type="button" onClick={playPreviousTrack} aria-label="Previous track">
+              ⏮
+            </button>
             <button
               type="button"
               onClick={togglePlayback}
@@ -78,8 +84,17 @@ export function BottomPlayer() {
                 </svg>
               )}
             </button>
-            <button type="button">⏭</button>
-            <button type="button">☰</button>
+            <button type="button" onClick={playNextTrack} aria-label="Next track">
+              ⏭
+            </button>
+            <button
+              type="button"
+              onClick={toggleQueue}
+              aria-label={isQueueOpen ? "Hide queue" : "Show queue"}
+              className={isQueueOpen ? "text-white" : undefined}
+            >
+              ☰
+            </button>
           </div>
           <div className="flex w-full max-w-[520px] items-center gap-3 text-xs text-spotify-muted">
             <span>{formatPlaybackTime(playbackProgressSeconds)}</span>
@@ -107,7 +122,7 @@ export function BottomPlayer() {
             {activeRoom ? arcDisplayNames[activeRoom.arc] : "Temporary room"}
           </span>
           <span className="hidden rounded-pill bg-spotify-surfaceAlt px-3 py-2 text-xs text-spotify-muted lg:inline-flex">
-            Queue in next phase
+            {isQueueOpen ? "Queue open" : "Open queue"}
           </span>
         </div>
       </div>

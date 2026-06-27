@@ -1,4 +1,13 @@
-import { ArcType, DemoFlowKey, FlowRoom, PulseState, RoomMemory, Track } from "../domain/types";
+import {
+  ArcType,
+  DemoFlowKey,
+  DiagnosticChip,
+  FlowRoom,
+  FollowUpOption,
+  PulseState,
+  RoomMemory,
+  Track
+} from "../domain/types";
 
 type DemoFlowDefinition = {
   id: DemoFlowKey;
@@ -12,6 +21,14 @@ type DemoFlowDefinition = {
   roomDescription: string;
   currentTrackId: string;
   trackQueue: string[];
+};
+
+type QueueSnapshot = {
+  key: string;
+  trackQueue: string[];
+  pulse?: PulseState;
+  helperText?: string;
+  memory?: Partial<RoomMemory>;
 };
 
 const trackCatalogEntries: Track[] = [
@@ -158,6 +175,222 @@ const trackCatalogEntries: Track[] = [
     duration: "3:29",
     coverGradient: "from-[#44736d] via-[#21413b] to-[#101615]",
     tags: ["bazaar", "rhythmic"]
+  },
+  {
+    id: "resham-hawa-mira",
+    title: "Resham Hawa",
+    artist: "Mira",
+    duration: "3:43",
+    coverGradient: "from-[#6b7db0] via-[#394368] to-[#161720]",
+    tags: ["soft", "airy"]
+  },
+  {
+    id: "naram-si-raat-vedika",
+    title: "Naram Si Raat",
+    artist: "Vedika",
+    duration: "3:31",
+    coverGradient: "from-[#6d5a84] via-[#35263f] to-[#141118]",
+    tags: ["night", "soft"]
+  },
+  {
+    id: "chupke-baarish-aarav",
+    title: "Chupke Baarish",
+    artist: "Aarav",
+    duration: "3:54",
+    coverGradient: "from-[#2f5f74] via-[#203947] to-[#0f151a]",
+    tags: ["rain", "quiet"]
+  },
+  {
+    id: "dheere-se-anika",
+    title: "Dheere Se",
+    artist: "Anika",
+    duration: "3:40",
+    coverGradient: "from-[#846a4d] via-[#453323] to-[#17120f]",
+    tags: ["gentle", "close"]
+  },
+  {
+    id: "saans-halki-zoya",
+    title: "Saans Halki",
+    artist: "Zoya",
+    duration: "3:36",
+    coverGradient: "from-[#5d8474] via-[#2a473f] to-[#121714]",
+    tags: ["light", "soft"]
+  },
+  {
+    id: "mitti-aur-dhuaan-arohi",
+    title: "Mitti Aur Dhuaan",
+    artist: "Arohi",
+    duration: "4:05",
+    coverGradient: "from-[#76624f] via-[#403127] to-[#161210]",
+    tags: ["earthy", "deep"]
+  },
+  {
+    id: "sannata-advait",
+    title: "Sannata",
+    artist: "Advait",
+    duration: "3:22",
+    coverGradient: "from-[#3f5062] via-[#222932] to-[#101216]",
+    tags: ["quiet", "minimal"]
+  },
+  {
+    id: "noorani-raat-tara",
+    title: "Noorani Raat",
+    artist: "Tara",
+    duration: "3:58",
+    coverGradient: "from-[#6f6896] via-[#3c3754] to-[#15131c]",
+    tags: ["glow", "night"]
+  },
+  {
+    id: "bheegi-dhoop-ishan",
+    title: "Bheegi Dhoop",
+    artist: "Ishan",
+    duration: "3:47",
+    coverGradient: "from-[#4f7c83] via-[#294048] to-[#111518]",
+    tags: ["rain", "warm"]
+  },
+  {
+    id: "lift-off-zedha",
+    title: "Lift Off",
+    artist: "Zedha",
+    duration: "3:01",
+    coverGradient: "from-[#d86f31] via-[#7b2c20] to-[#170d10]",
+    tags: ["workout", "fresh"]
+  },
+  {
+    id: "iron-pulse-kairo",
+    title: "Iron Pulse",
+    artist: "Kairo",
+    duration: "2:56",
+    coverGradient: "from-[#6d707b] via-[#343741] to-[#131416]",
+    tags: ["lift", "pulse"]
+  },
+  {
+    id: "fuel-state-nox",
+    title: "Fuel State",
+    artist: "Nox",
+    duration: "3:10",
+    coverGradient: "from-[#8f4e24] via-[#512519] to-[#160d10]",
+    tags: ["drive", "gym"]
+  },
+  {
+    id: "night-sprint-ariv",
+    title: "Night Sprint",
+    artist: "Ariv",
+    duration: "3:18",
+    coverGradient: "from-[#33567d] via-[#203248] to-[#10131a]",
+    tags: ["run", "night"]
+  },
+  {
+    id: "runline-jett",
+    title: "Runline",
+    artist: "Jett",
+    duration: "3:02",
+    coverGradient: "from-[#6f8a39] via-[#39491d] to-[#131610]",
+    tags: ["cardio", "fresh"]
+  },
+  {
+    id: "surgeframe-riko",
+    title: "Surgeframe",
+    artist: "Riko",
+    duration: "3:09",
+    coverGradient: "from-[#7b5aa0] via-[#40295d] to-[#15111d]",
+    tags: ["tempo", "push"]
+  },
+  {
+    id: "motion-code-lyra",
+    title: "Motion Code",
+    artist: "Lyra",
+    duration: "3:14",
+    coverGradient: "from-[#3f8c82] via-[#20504d] to-[#111716]",
+    tags: ["new", "motion"]
+  },
+  {
+    id: "breakpoint-eshan",
+    title: "Breakpoint",
+    artist: "Eshan",
+    duration: "3:07",
+    coverGradient: "from-[#d16f2b] via-[#733125] to-[#180d11]",
+    tags: ["sharp", "fresh"]
+  },
+  {
+    id: "kinetic-heat-vaan",
+    title: "Kinetic Heat",
+    artist: "Vaan",
+    duration: "3:21",
+    coverGradient: "from-[#9d4f38] via-[#56251d] to-[#170e10]",
+    tags: ["heat", "gym"]
+  },
+  {
+    id: "aero-rush-mivik",
+    title: "Aero Rush",
+    artist: "Mivik",
+    duration: "3:12",
+    coverGradient: "from-[#4483a2] via-[#22445c] to-[#10151b]",
+    tags: ["aero", "run"]
+  },
+  {
+    id: "crossfade-run-tyra",
+    title: "Crossfade Run",
+    artist: "Tyra",
+    duration: "3:17",
+    coverGradient: "from-[#7c6a2b] via-[#45391b] to-[#17130f]",
+    tags: ["run", "steady"]
+  },
+  {
+    id: "raagline-iva",
+    title: "Raagline",
+    artist: "Iva",
+    duration: "4:02",
+    coverGradient: "from-[#72865c] via-[#39452e] to-[#151712]",
+    tags: ["raag", "grounded"]
+  },
+  {
+    id: "safar-dheema-samar",
+    title: "Safar Dheema",
+    artist: "Samar",
+    duration: "3:50",
+    coverGradient: "from-[#5d6f91] via-[#313a58] to-[#12141b]",
+    tags: ["slow", "emotional"]
+  },
+  {
+    id: "dil-se-door-kavir",
+    title: "Dil Se Door",
+    artist: "Kavir",
+    duration: "3:46",
+    coverGradient: "from-[#87576e] via-[#442535] to-[#171116]",
+    tags: ["melodic", "close"]
+  },
+  {
+    id: "noor-path-meher",
+    title: "Noor Path",
+    artist: "Meher",
+    duration: "3:39",
+    coverGradient: "from-[#73847d] via-[#38423d] to-[#141715]",
+    tags: ["warm", "grounded"]
+  },
+  {
+    id: "aabshaar-niyati",
+    title: "Aabshaar",
+    artist: "Niyati",
+    duration: "4:06",
+    coverGradient: "from-[#4c7190] via-[#26384b] to-[#10131a]",
+    tags: ["water", "calm"]
+  },
+  {
+    id: "sheher-ka-chand-tara-v",
+    title: "Sheher Ka Chand",
+    artist: "Tara V",
+    duration: "3:57",
+    coverGradient: "from-[#907254] via-[#493323] to-[#171210]",
+    tags: ["city", "night"]
+  },
+  {
+    id: "chalte-reh-avik",
+    title: "Chalte Reh",
+    artist: "Avik",
+    duration: "3:34",
+    coverGradient: "from-[#6a7f94] via-[#34404d] to-[#121518]",
+    tags: ["forward", "melodic"]
   }
 ];
 
@@ -240,6 +473,77 @@ export const promptToDemoFlow: Record<string, DemoFlowKey> = Object.fromEntries(
   Object.values(demoFlows).map((flow) => [flow.starterPrompt, flow.id])
 ) as Record<string, DemoFlowKey>;
 
+export const steeringSnapshots: Partial<
+  Record<DemoFlowKey, Partial<Record<DiagnosticChip | FollowUpOption | "nl_refine", QueueSnapshot>>>
+> = {
+  rainy_evening: {
+    softer: {
+      key: "rainy-softer",
+      pulse: "going_deeper",
+      trackQueue: [
+        "khidki-noor",
+        "resham-hawa-mira",
+        "naram-si-raat-vedika",
+        "chupke-baarish-aarav",
+        "dheere-se-anika",
+        "saans-halki-zoya"
+      ],
+      memory: {
+        acceptedDirections: ["softer"],
+        moodCorrections: ["softer"]
+      }
+    }
+  },
+  fresh_workout: {
+    too_familiar: {
+      key: "workout-too-familiar",
+      pulse: "getting_fresher",
+      trackQueue: [
+        "lift-off-zedha",
+        "iron-pulse-kairo",
+        "fuel-state-nox",
+        "night-sprint-ariv",
+        "runline-jett",
+        "surgeframe-riko"
+      ],
+      memory: {
+        rejectedDirections: ["too_familiar"]
+      }
+    }
+  },
+  melodic_surprise: {
+    too_different: {
+      key: "surprise-too-different",
+      pulse: "pulling_back",
+      trackQueue: [
+        "sitar-bloom-anvi",
+        "raagline-iva",
+        "safar-dheema-samar",
+        "dil-se-door-kavir",
+        "noor-path-meher",
+        "aabshaar-niyati"
+      ],
+      memory: {
+        rejectedDirections: ["too_different"]
+      }
+    },
+    nl_refine: {
+      key: "surprise-nl-refine",
+      trackQueue: [
+        "safar-dheema-samar",
+        "noor-path-meher",
+        "dil-se-door-kavir",
+        "aabshaar-niyati",
+        "sheher-ka-chand-tara-v",
+        "chalte-reh-avik"
+      ],
+      memory: {
+        acceptedDirections: ["more_emotional", "less_noisy"]
+      }
+    }
+  }
+};
+
 export function createRoomFromFlow(flowId: DemoFlowKey, arcOverride?: ArcType): FlowRoom {
   const flow = demoFlows[flowId];
   const arc = arcOverride ?? flow.suggestedArc;
@@ -300,3 +604,14 @@ export function formatPlaybackTime(totalSeconds: number): string {
 
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
+
+export const followUpLabels: Record<FollowUpOption, string> = {
+  happier: "Happier",
+  sadder: "Sadder",
+  softer: "Softer",
+  darker: "Darker",
+  calmer: "Calmer",
+  more_energetic: "More energetic",
+  slower: "Slower",
+  faster: "Faster"
+};

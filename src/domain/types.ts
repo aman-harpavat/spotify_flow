@@ -7,6 +7,21 @@ export type PulseState =
   | "pulling_back";
 
 export type DemoFlowKey = "rainy_evening" | "fresh_workout" | "melodic_surprise";
+export type DiagnosticChip =
+  | "too_familiar"
+  | "too_different"
+  | "wrong_mood"
+  | "wrong_energy";
+export type FollowUpType = "mood" | "energy" | null;
+export type FollowUpOption =
+  | "happier"
+  | "sadder"
+  | "softer"
+  | "darker"
+  | "calmer"
+  | "more_energetic"
+  | "slower"
+  | "faster";
 
 export type Track = {
   id: string;

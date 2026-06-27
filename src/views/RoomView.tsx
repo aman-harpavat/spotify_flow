@@ -1,17 +1,49 @@
+import { FormEvent } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { arcDisplayNames, pulseLabels, trackCatalog } from "../data/demoRooms";
+import {
+  arcDisplayNames,
+  followUpLabels,
+  pulseLabels,
+  trackCatalog
+} from "../data/demoRooms";
 import { useFlowStore } from "../app/store/flowStore";
+import { DiagnosticChip, FollowUpOption } from "../domain/types";
+
+const diagnosticChipLabels: Record<DiagnosticChip, string> = {
+  too_familiar: "Too familiar",
+  too_different: "Too different",
+  wrong_mood: "Wrong mood",
+  wrong_energy: "Wrong energy"
+};
+
+const moodOptions: FollowUpOption[] = ["happier", "sadder", "softer", "darker"];
+const energyOptions: FollowUpOption[] = ["calmer", "more_energetic", "slower", "faster"];
 
 export function RoomView() {
   const { roomId } = useParams();
   const activeRoom = useFlowStore((state) => state.activeRoom);
+  const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
+  const toggleQueue = useFlowStore((state) => state.toggleQueue);
+  const selectedDiagnosticChip = useFlowStore((state) => state.selectedDiagnosticChip);
+  const visibleFollowUpType = useFlowStore((state) => state.visibleFollowUpType);
+  const refinementDraft = useFlowStore((state) => state.refinementDraft);
+  const selectDiagnosticChip = useFlowStore((state) => state.selectDiagnosticChip);
+  const applyFollowUpOption = useFlowStore((state) => state.applyFollowUpOption);
+  const setRefinementDraft = useFlowStore((state) => state.setRefinementDraft);
+  const submitRefinement = useFlowStore((state) => state.submitRefinement);
 
   if (!activeRoom || activeRoom.id !== roomId) {
     return <Navigate to="/" replace />;
   }
 
   const currentTrack = trackCatalog[activeRoom.currentTrackId];
-  const nextUp = activeRoom.trackQueue.slice(1).map((trackId) => trackCatalog[trackId]);
+  const nextUp = activeRoom.trackQueue
+    .slice(currentTrackIndex + 1)
+    .map((trackId) => trackCatalog[trackId]);
+  const handleRefinementSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submitRefinement();
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6 md:py-8">
@@ -76,8 +108,8 @@ export function RoomView() {
                 </p>
                 <p className="mt-3 text-lg font-bold text-white">{activeRoom.helperText}</p>
                 <p className="mt-3 text-sm text-spotify-muted">
-                  Playback starts immediately when you enter. Queue updates and live
-                  steering land in the next phase.
+                  Playback starts immediately when you enter. Use the room controls
+                  below to steer what comes next.
                 </p>
               </div>
 
@@ -88,12 +120,13 @@ export function RoomView() {
                       Queue access
                     </p>
                     <p className="mt-2 text-sm text-spotify-muted">
-                      The queue drawer is the next build step, but the session queue is
-                      already seeded below.
+                      Open the queue to see the currently playing track and how the
+                      next-up list changes as you steer.
                     </p>
                   </div>
                   <button
                     type="button"
+                    onClick={toggleQueue}
                     className="rounded-pill border border-white/10 px-4 py-2 text-sm font-bold text-white/85 transition hover:border-white/25 hover:bg-white/5"
                   >
                     Queue
@@ -102,17 +135,76 @@ export function RoomView() {
               </div>
 
               <div className="rounded-[20px] border border-white/8 bg-spotify-surface p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
-                      Prototype hint
-                    </p>
-                    <p className="mt-2 text-sm text-white">{activeRoom.testHint}</p>
-                  </div>
-                  <span className="rounded-pill bg-white/10 px-3 py-2 text-xs text-white/65">
-                    Playback live
-                  </span>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+                  Tune this room
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {(
+                    Object.keys(diagnosticChipLabels) as DiagnosticChip[]
+                  ).map((chip) => {
+                    const active = selectedDiagnosticChip === chip;
+
+                    return (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => selectDiagnosticChip(chip)}
+                        className={`rounded-pill border px-4 py-2 text-sm font-bold transition ${
+                          active
+                            ? "border-spotify-green bg-spotify-green text-black"
+                            : "border-white/10 bg-white/5 text-white hover:border-white/25 hover:bg-white/10"
+                        }`}
+                      >
+                        {diagnosticChipLabels[chip]}
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {visibleFollowUpType ? (
+                  <div className="mt-5 rounded-[18px] bg-white/5 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+                      {visibleFollowUpType === "mood" ? "Shift the mood" : "Shift the energy"}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {(visibleFollowUpType === "mood" ? moodOptions : energyOptions).map(
+                        (option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => applyFollowUpOption(option)}
+                            className="rounded-pill border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:border-white/25 hover:bg-white/10"
+                          >
+                            {followUpLabels[option]}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                <form className="mt-5 space-y-3" onSubmit={handleRefinementSubmit}>
+                  <label className="block">
+                    <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-white/55">
+                      Refine this room...
+                    </span>
+                    <input
+                      value={refinementDraft}
+                      onChange={(event) => setRefinementDraft(event.target.value)}
+                      placeholder="Try: more emotional, less noisy"
+                      className="w-full rounded-pill border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/25"
+                    />
+                  </label>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-spotify-muted">{activeRoom.testHint}</p>
+                    <button
+                      type="submit"
+                      className="rounded-pill bg-spotify-green px-4 py-2 text-sm font-bold text-black transition hover:scale-[1.02]"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

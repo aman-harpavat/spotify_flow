@@ -783,6 +783,7 @@ The queue should be accessible from the bottom player, similar to a real music p
 #### Behavior
 After steering, the queue panel should clearly reflect the updated next-up tracks.
 This is one of the main signals that the room is adapting.
+Playback should advance through the active session queue as tracks finish.
 
 ---
 

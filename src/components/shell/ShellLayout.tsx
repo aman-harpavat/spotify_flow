@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomPlayer } from "./BottomPlayer";
+import { QueueDrawer } from "../queue/QueueDrawer";
 import { Toast } from "../shared/Toast";
 import { useFlowStore } from "../../app/store/flowStore";
 
@@ -22,6 +23,7 @@ export function ShellLayout() {
           </div>
         </div>
       </div>
+      <QueueDrawer />
       <BottomPlayer />
       <Toast toast={toast} onDismiss={dismissToast} />
     </div>
