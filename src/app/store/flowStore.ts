@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { createRoomFromFlow, demoFlows, promptToDemoFlow } from "../../data/demoRooms";
+import { ArcType, FlowRoom } from "../../domain/types";
 
 export type LauncherStep = "prompt" | "arc";
 
@@ -13,13 +15,21 @@ type FlowStore = {
   promptDraft: string;
   selectedStarterPrompt: string | null;
   keepSeparateProfile: boolean;
+  suggestedArc: ArcType | null;
+  selectedArc: ArcType | null;
+  activeRoom: FlowRoom | null;
+  isPlaying: boolean;
   toast: ToastState;
   openLauncher: () => void;
   closeLauncher: () => void;
   setPromptDraft: (value: string) => void;
   selectStarterPrompt: (value: string) => void;
   toggleSeparateProfile: () => void;
+  setSelectedArc: (value: ArcType) => void;
   submitLauncher: () => { ok: boolean; error?: string };
+  goBackToPromptStep: () => void;
+  createActiveRoom: () => { ok: boolean; roomId?: string; error?: string };
+  togglePlayback: () => void;
   dismissToast: () => void;
 };
 
@@ -35,10 +45,15 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   promptDraft: "",
   selectedStarterPrompt: null,
   keepSeparateProfile: true,
+  suggestedArc: null,
+  selectedArc: null,
+  activeRoom: null,
+  isPlaying: false,
   toast: null,
   openLauncher: () =>
     set({
       isLauncherOpen: true,
+      launcherStep: "prompt",
       toast: null
     }),
   closeLauncher: () =>
@@ -51,14 +66,25 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       selectedStarterPrompt: null
     }),
   selectStarterPrompt: (value) =>
-    set({
-      promptDraft: value,
-      selectedStarterPrompt: value
+    set(() => {
+      const flowId = promptToDemoFlow[value];
+      const suggestedArc = demoFlows[flowId].suggestedArc;
+
+      return {
+        promptDraft: value,
+        selectedStarterPrompt: value,
+        suggestedArc,
+        selectedArc: suggestedArc
+      };
     }),
   toggleSeparateProfile: () =>
     set((state) => ({
       keepSeparateProfile: !state.keepSeparateProfile
     })),
+  setSelectedArc: (value) =>
+    set({
+      selectedArc: value
+    }),
   submitLauncher: () => {
     const prompt = get().promptDraft.trim();
     const selectedStarterPrompt = get().selectedStarterPrompt;
@@ -78,17 +104,49 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     }
 
     set({
-      isLauncherOpen: false,
-      toast: {
-        title: "Room prompt captured",
-        message: "Phase 1 is complete. Arc suggestion and room creation land in Phase 2."
-      }
+      launcherStep: "arc",
+      toast: null
     });
 
     return {
       ok: true
     };
   },
+  goBackToPromptStep: () =>
+    set({
+      launcherStep: "prompt"
+    }),
+  createActiveRoom: () => {
+    const selectedStarterPrompt = get().selectedStarterPrompt;
+    const selectedArc = get().selectedArc;
+
+    if (!selectedStarterPrompt || !selectedArc) {
+      return {
+        ok: false,
+        error: "Arc and demo prompt are required"
+      };
+    }
+
+    const flowId = promptToDemoFlow[selectedStarterPrompt];
+    const activeRoom = createRoomFromFlow(flowId, selectedArc);
+
+    set({
+      activeRoom,
+      isPlaying: true,
+      isLauncherOpen: false,
+      launcherStep: "prompt",
+      toast: null
+    });
+
+    return {
+      ok: true,
+      roomId: activeRoom.id
+    };
+  },
+  togglePlayback: () =>
+    set((state) => ({
+      isPlaying: !state.isPlaying
+    })),
   dismissToast: () =>
     set({
       toast: null
