@@ -509,6 +509,7 @@ The prototype should be deterministic under the hood but feel responsive and ada
 - build with Vite
 - deploy compiled frontend only
 - no backend required for initial prototype
+- add a `vercel.json` SPA rewrite so direct refreshes on room routes resolve to `index.html`
 
 ### Persistence behavior in deployment
 - saved rooms live in in-memory client state only and reset to the seeded demo state on full reload

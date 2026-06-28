@@ -756,6 +756,7 @@ Behavior:
 - one arc preselected using hardcoded mapping
 - the mapped style remains visible, but in this prototype it should not be overrideable
 - keep only one muted helper line explaining that the demo flow uses one mapped style
+- active room URLs should use listener-facing slugs based on the selected room name rather than internal demo keys
 
 ---
 
@@ -966,6 +967,7 @@ Reopening a saved room must:
 - stay in the same discovery spirit
 - reflect saved room memory
 - not replay the exact same previous sequence
+- reuse the same listener-facing room slug for that saved room
 
 This is one of the most important product semantics in the prototype.
 

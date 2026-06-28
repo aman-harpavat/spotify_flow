@@ -44,6 +44,7 @@ export type RoomMemory = {
 
 export type FlowRoom = {
   id: string;
+  routeSlug: string;
   demoFlow: DemoFlowKey;
   title: string;
   prompt: string;

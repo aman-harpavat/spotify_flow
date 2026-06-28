@@ -126,6 +126,7 @@ describe("flowStore steering", () => {
     const pendingState = useFlowStore.getState();
 
     expect(result.ok).toBe(true);
+    expect(result.roomId).toBe("fresh-workout-music");
     expect(pendingState.isFlowThinking).toBe(true);
     expect(pendingState.isPlaying).toBe(false);
     expect(pendingState.thinkingTrackId).toBe("preview-night-bloom");
@@ -152,6 +153,7 @@ describe("flowStore steering", () => {
     const pendingState = useFlowStore.getState();
 
     expect(result.ok).toBe(true);
+    expect(result.roomId).toBe("fresh-workout-music");
     expect(pendingState.isFlowThinking).toBe(true);
     expect(pendingState.isPlaying).toBe(true);
     expect(pendingState.playbackProgressSeconds).toBe(42);
@@ -161,7 +163,7 @@ describe("flowStore steering", () => {
 
     const resolvedState = useFlowStore.getState();
     expect(resolvedState.activeRoom?.currentTrackId).toBe("charge-up-nova-run");
-    expect(resolvedState.playbackProgressSeconds).toBe(42);
+    expect(resolvedState.playbackProgressSeconds).toBe(0);
   });
 
   it("shows flow complete when the same tuning chip is selected again", () => {
@@ -215,6 +217,7 @@ describe("flowStore steering", () => {
     const pendingState = useFlowStore.getState();
 
     expect(result.ok).toBe(true);
+    expect(result.roomId).toBe("rainy-evening-hindi");
     expect(pendingState.isFlowThinking).toBe(true);
 
     vi.runAllTimers();

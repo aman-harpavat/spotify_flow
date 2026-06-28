@@ -342,13 +342,14 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         isPlaying: true,
         isFlowThinking: false,
         thinkingMessage: null,
-        thinkingTrackId: null
+        thinkingTrackId: null,
+        playbackProgressSeconds: 0
       });
     }, THINKING_DELAY_MS);
 
     return {
       ok: true,
-      roomId: activeRoom.id
+      roomId: activeRoom.routeSlug
     };
   },
   createActiveRoom: () => {
@@ -391,13 +392,14 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         isPlaying: true,
         isFlowThinking: false,
         thinkingMessage: null,
-        thinkingTrackId: null
+        thinkingTrackId: null,
+        playbackProgressSeconds: 0
       });
     }, THINKING_DELAY_MS);
 
     return {
       ok: true,
-      roomId: activeRoom.id
+      roomId: activeRoom.routeSlug
     };
   },
   togglePlayback: () =>
@@ -902,6 +904,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         thinkingMessage: null,
         thinkingTrackId: null,
         isPlaying: true,
+        playbackProgressSeconds: 0,
         toast: {
           title: "Saved room reopened",
           message: "Fresh session ready in the same vibe."
@@ -911,7 +914,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
 
     return {
       ok: true,
-      roomId: activeRoom.id
+      roomId: activeRoom.routeSlug
     };
   },
   getInteractionHint: () => {

@@ -613,9 +613,11 @@ export const steeringSnapshots: Partial<
 export function createRoomFromFlow(flowId: DemoFlowKey, arcOverride?: ArcType): FlowRoom {
   const flow = demoFlows[flowId];
   const arc = arcOverride ?? flow.suggestedArc;
+  const routeSlug = flow.starterPrompt.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   return {
     id: `${flow.id}-${Date.now()}`,
+    routeSlug,
     demoFlow: flow.id,
     title: flow.title,
     prompt: flow.prompt,
@@ -746,6 +748,10 @@ export function createRoomFromSavedDefinition(savedRoom: SavedRoomDefinition): F
   return {
     ...baseRoom,
     id: `${savedRoom.demoFlow}-saved-${Date.now()}`,
+    routeSlug: savedRoom.starterPrompt
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, ""),
     title: savedRoom.title,
     prompt: savedRoom.prompt,
     starterPrompt: savedRoom.starterPrompt,

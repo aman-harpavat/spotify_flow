@@ -79,7 +79,7 @@ export function RoomView() {
   const discardActiveRoom = useFlowStore((state) => state.discardActiveRoom);
   const interactionHint = useFlowStore((state) => state.getInteractionHint());
 
-  if (!activeRoom || activeRoom.id !== roomId) {
+  if (!activeRoom || activeRoom.routeSlug !== roomId) {
     return <Navigate to="/" replace />;
   }
 
