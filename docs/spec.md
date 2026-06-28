@@ -744,7 +744,7 @@ Behavior:
 Required UI:
 - `Building your room…`
 - `Best fit: [Room Style]`
-- helper: `You can switch this anytime`
+- one muted helper line explaining that this demo flow uses a single mapped starting style
 - 3 room-style choices with plain-language labels and short explanations
 - the 3 choices should be clearly distinguishable at a glance:
   - one that stays in the current mood

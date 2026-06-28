@@ -511,7 +511,7 @@ The prototype should be deterministic under the hood but feel responsive and ada
 - no backend required for initial prototype
 
 ### Persistence behavior in deployment
-- saved rooms use browser `localStorage`
+- saved rooms live in in-memory client state only and reset to the seeded demo state on full reload
 - prototype works fully without server data
 
 ### Demo-readiness
