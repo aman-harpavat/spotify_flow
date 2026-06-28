@@ -65,6 +65,8 @@ export function RoomView() {
   const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
   const queueRevision = useFlowStore((state) => state.queueRevision);
   const isQueueOpen = useFlowStore((state) => state.isQueueOpen);
+  const isFlowThinking = useFlowStore((state) => state.isFlowThinking);
+  const thinkingMessage = useFlowStore((state) => state.thinkingMessage);
   const selectedDiagnosticChip = useFlowStore((state) => state.selectedDiagnosticChip);
   const visibleFollowUpType = useFlowStore((state) => state.visibleFollowUpType);
   const refinementDraft = useFlowStore((state) => state.refinementDraft);
@@ -123,30 +125,58 @@ export function RoomView() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <div
-              className={`rounded-[20px] bg-gradient-to-br ${currentTrack.coverGradient} p-6 shadow-spotify`}
-            >
-              <div className="flex h-full min-h-[280px] flex-col justify-between">
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-white/70">
-                  <span>Now playing</span>
-                  <span>{currentTrack.duration}</span>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-white">{currentTrack.title}</p>
-                  <p className="mt-2 text-lg text-white/80">{currentTrack.artist}</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {currentTrack.tags.map((tag) => (
+            {isFlowThinking ? (
+              <div className="rounded-[20px] border border-white/8 bg-gradient-to-br from-white/8 to-white/[0.03] p-6 shadow-spotify">
+                <div className="flex h-full min-h-[280px] flex-col justify-between">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-white/70">
+                    <span>Now playing</span>
+                    <span>Thinking...</span>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">Flow is thinking</p>
+                    <p className="mt-3 max-w-[18rem] text-lg text-white/72">
+                      {thinkingMessage ?? "Building your music..."}
+                    </p>
+                    <div className="mt-6 flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-spotify-green" />
                       <span
-                        key={tag}
-                        className="rounded-pill bg-black/25 px-3 py-2 text-xs text-white/80"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                        className="h-2.5 w-2.5 animate-pulse rounded-full bg-spotify-green/70"
+                        style={{ animationDelay: "160ms" }}
+                      />
+                      <span
+                        className="h-2.5 w-2.5 animate-pulse rounded-full bg-spotify-green/45"
+                        style={{ animationDelay: "320ms" }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div
+                className={`rounded-[20px] bg-gradient-to-br ${currentTrack.coverGradient} p-6 shadow-spotify`}
+              >
+                <div className="flex h-full min-h-[280px] flex-col justify-between">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-white/70">
+                    <span>Now playing</span>
+                    <span>{currentTrack.duration}</span>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{currentTrack.title}</p>
+                    <p className="mt-2 text-lg text-white/80">{currentTrack.artist}</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {currentTrack.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-pill bg-black/25 px-3 py-2 text-xs text-white/80"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-5">
               <div className="ui-surface p-5">
@@ -177,7 +207,7 @@ export function RoomView() {
                         key={chip}
                         type="button"
                         onClick={() => enabled && selectDiagnosticChip(chip)}
-                        disabled={!enabled}
+                        disabled={!enabled || isFlowThinking}
                         className={`rounded-pill border px-4 py-2 text-sm font-bold transition ${
                           active
                             ? "border-spotify-green bg-spotify-green text-black"
@@ -210,7 +240,7 @@ export function RoomView() {
                             key={option}
                             type="button"
                             onClick={() => enabled && applyFollowUpOption(option)}
-                            disabled={!enabled}
+                            disabled={!enabled || isFlowThinking}
                             className={`rounded-pill border px-4 py-2 text-sm font-bold transition ${
                               enabled
                                 ? "border-white/10 bg-white/5 text-white hover:border-white/25 hover:bg-white/10"
@@ -235,7 +265,7 @@ export function RoomView() {
                       value={refinementDraft}
                       onChange={(event) => setRefinementDraft(event.target.value)}
                       placeholder="Try: more emotional, less noisy"
-                      disabled={!demoControls.refinementEnabled}
+                      disabled={!demoControls.refinementEnabled || isFlowThinking}
                       className={`w-full rounded-pill border px-4 py-3 text-sm outline-none transition placeholder:text-white/35 ${
                         demoControls.refinementEnabled
                           ? "border-white/10 bg-white/5 text-white focus:border-white/25"
@@ -247,7 +277,7 @@ export function RoomView() {
                     <p className="ui-hint">{activeRoom.testHint}</p>
                     <button
                       type="submit"
-                      disabled={!demoControls.refinementEnabled}
+                      disabled={!demoControls.refinementEnabled || isFlowThinking}
                       className={`rounded-pill px-4 py-2 text-sm font-bold transition ${
                         demoControls.refinementEnabled
                           ? "bg-spotify-green text-black hover:scale-[1.02]"
@@ -278,7 +308,24 @@ export function RoomView() {
               key={queueRevision}
               className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1"
             >
-              {visibleNextUp.map((track, index) => (
+              {isFlowThinking ? (
+                <div className="rounded-[16px] border border-white/8 bg-white/[0.03] p-4">
+                  <p className="text-sm font-bold text-white">Flow is thinking</p>
+                  <p className="ui-hint mt-2">{thinkingMessage ?? "Building your music..."}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-spotify-green" />
+                    <span
+                      className="h-2 w-2 animate-pulse rounded-full bg-spotify-green/70"
+                      style={{ animationDelay: "160ms" }}
+                    />
+                    <span
+                      className="h-2 w-2 animate-pulse rounded-full bg-spotify-green/45"
+                      style={{ animationDelay: "320ms" }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+              {!isFlowThinking ? visibleNextUp.map((track, index) => (
                 <div
                   key={track.id}
                   className="queue-refresh-item flex items-center gap-3 rounded-[16px] bg-white/5 p-3"
@@ -293,8 +340,8 @@ export function RoomView() {
                   </div>
                   <span className="ui-hint">{track.duration}</span>
                 </div>
-              ))}
-              {queuePlaceholders.map((_, index) => (
+              )) : null}
+              {!isFlowThinking ? queuePlaceholders.map((_, index) => (
                 <div
                   key={`placeholder-${currentTrackIndex}-${index}`}
                   className="queue-refresh-item flex items-center gap-3 rounded-[16px] border border-white/6 bg-white/[0.03] p-3"
@@ -307,7 +354,7 @@ export function RoomView() {
                   </div>
                   <span className="ui-hint">--:--</span>
                 </div>
-              ))}
+              )) : null}
             </div>
           </div>
         </aside>

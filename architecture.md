@@ -323,6 +323,7 @@ Apply steering in the exact priority defined by the spec:
 - text refinement submits a deterministic queue transition for the current demo flow
 - arc adjustments change room direction at the room level, not just the next song
 - unsupported controls for a given demo flow can stay visible for realism, but should be disabled and paired with a single muted hint near the controls rather than boxed guidance copy
+- supported steering actions can show a short listener-friendly "Flow is thinking" message that explains the kind of change being prepared
 
 ### Steering write targets
 Every steering action can update:

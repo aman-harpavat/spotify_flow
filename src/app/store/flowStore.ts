@@ -23,11 +23,20 @@ type ToastState = {
   message: string;
 } | null;
 
+type FlowStoreSet = (
+  partial: FlowStore | Partial<FlowStore> | ((state: FlowStore) => FlowStore | Partial<FlowStore>),
+  replace?: boolean
+) => void;
+
 type FlowStore = {
   isLauncherOpen: boolean;
   launcherStep: LauncherStep;
   isQueueOpen: boolean;
   queueRevision: number;
+  isFlowThinking: boolean;
+  thinkingMessage: string | null;
+  thinkingTrackId: string | null;
+  completionHint: string | null;
   promptDraft: string;
   selectedStarterPrompt: string | null;
   keepSeparateProfile: boolean;
@@ -65,6 +74,23 @@ type FlowStore = {
   dismissToast: () => void;
 };
 
+const THINKING_DELAY_MS = 5000;
+
+function withThinkingDelay(
+  message: string,
+  action: () => void,
+  set: FlowStoreSet
+) {
+  set({
+    isFlowThinking: true,
+    thinkingMessage: message
+  });
+
+  window.setTimeout(() => {
+    action();
+  }, THINKING_DELAY_MS);
+}
+
 function withUpdatedQueue(room: FlowRoom, trackQueue: string[]): FlowRoom {
   return {
     ...room,
@@ -88,6 +114,31 @@ function mergeMemory(room: FlowRoom, memory?: Partial<FlowRoom["memory"]>): Flow
     moodCorrections: memory.moodCorrections ?? room.memory.moodCorrections,
     energyCorrections: memory.energyCorrections ?? room.memory.energyCorrections
   };
+}
+
+function getSteeringThinkingMessage(
+  flowId: FlowRoom["demoFlow"],
+  action: DiagnosticChip | FollowUpOption | "nl_refine"
+) {
+  if (action === "too_familiar") {
+    return "Finding less familiar picks that still fit your energy...";
+  }
+
+  if (action === "too_different") {
+    return "Pulling things closer to your vibe...";
+  }
+
+  if (action === "softer") {
+    return "Softening the room while keeping the same mood...";
+  }
+
+  if (action === "nl_refine") {
+    return flowId === "melodic_surprise"
+      ? "Reshaping the room around that direction..."
+      : "Refreshing your room...";
+  }
+
+  return "Refreshing your room...";
 }
 
 function getAllowedControls(room: FlowRoom) {
@@ -142,6 +193,10 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   launcherStep: "prompt",
   isQueueOpen: false,
   queueRevision: 0,
+  isFlowThinking: false,
+  thinkingMessage: null,
+  thinkingTrackId: null,
+  completionHint: null,
   promptDraft: "",
   selectedStarterPrompt: null,
   keepSeparateProfile: true,
@@ -247,7 +302,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       activeRoom,
       currentTrackIndex: 0,
       previewCurrentTrackIndex: 0,
-      isPlaying: true,
+      isPlaying: false,
       playbackProgressSeconds: 0,
       queueRevision: get().queueRevision + 1,
       isLauncherOpen: false,
@@ -256,8 +311,21 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       selectedDiagnosticChip: null,
       visibleFollowUpType: null,
       refinementDraft: "",
-      toast: null
+      toast: null,
+      thinkingTrackId: previewQueue[get().previewCurrentTrackIndex],
+      completionHint: null,
+      isFlowThinking: true,
+      thinkingMessage: "Building your music..."
     });
+
+    window.setTimeout(() => {
+      set({
+        isPlaying: true,
+        isFlowThinking: false,
+        thinkingMessage: null,
+        thinkingTrackId: null
+      });
+    }, THINKING_DELAY_MS);
 
     return {
       ok: true,
@@ -282,7 +350,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       activeRoom,
       currentTrackIndex: 0,
       previewCurrentTrackIndex: 0,
-      isPlaying: true,
+      isPlaying: false,
       playbackProgressSeconds: 0,
       queueRevision: get().queueRevision + 1,
       isLauncherOpen: false,
@@ -291,8 +359,21 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       selectedDiagnosticChip: null,
       visibleFollowUpType: null,
       refinementDraft: "",
-      toast: null
+      toast: null,
+      thinkingTrackId: previewQueue[get().previewCurrentTrackIndex],
+      completionHint: null,
+      isFlowThinking: true,
+      thinkingMessage: "Building your music..."
     });
+
+    window.setTimeout(() => {
+      set({
+        isPlaying: true,
+        isFlowThinking: false,
+        thinkingMessage: null,
+        thinkingTrackId: null
+      });
+    }, THINKING_DELAY_MS);
 
     return {
       ok: true,
@@ -410,11 +491,18 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         return state;
       }
 
+      if (state.selectedDiagnosticChip === chip && state.visibleFollowUpType === null) {
+        return {
+          completionHint: "Demo flow is complete for this room"
+        };
+      }
+
       if (chip === "wrong_mood") {
         return {
           selectedDiagnosticChip: chip,
           visibleFollowUpType: "mood",
-          toast: null
+          toast: null,
+          completionHint: null
         };
       }
 
@@ -422,7 +510,8 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         return {
           selectedDiagnosticChip: chip,
           visibleFollowUpType: "energy",
-          toast: null
+          toast: null,
+          completionHint: null
         };
       }
 
@@ -450,24 +539,46 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         };
       }
 
-      const updatedRoomBase = withUpdatedQueue(state.activeRoom, snapshot.trackQueue);
-      const updatedRoom: FlowRoom = {
-        ...updatedRoomBase,
-        pulse: snapshot.pulse ?? updatedRoomBase.pulse,
-        helperText: snapshot.helperText ?? updatedRoomBase.helperText,
-        memory: mergeMemory(updatedRoomBase, snapshot.memory)
-      };
+      withThinkingDelay(
+        getSteeringThinkingMessage(state.activeRoom.demoFlow, chip),
+        () => {
+          const latestState = get();
+          const latestRoom = latestState.activeRoom;
+
+          if (!latestRoom) {
+            return;
+          }
+
+          const updatedRoomBase = withUpdatedQueue(latestRoom, snapshot.trackQueue);
+          const updatedRoom: FlowRoom = {
+            ...updatedRoomBase,
+            pulse: snapshot.pulse ?? updatedRoomBase.pulse,
+            helperText: snapshot.helperText ?? updatedRoomBase.helperText,
+            memory: mergeMemory(updatedRoomBase, snapshot.memory)
+          };
+
+          set({
+            activeRoom: updatedRoom,
+            currentTrackIndex: 0,
+            playbackProgressSeconds: 0,
+            selectedDiagnosticChip: chip,
+            visibleFollowUpType: null,
+            isPlaying: true,
+            isQueueOpen: true,
+            queueRevision: latestState.queueRevision + 1,
+            toast: null,
+            thinkingTrackId: null,
+            completionHint: null,
+            isFlowThinking: false,
+            thinkingMessage: null
+          });
+        },
+        set
+      );
 
       return {
-        activeRoom: updatedRoom,
-        currentTrackIndex: 0,
-        playbackProgressSeconds: 0,
-        selectedDiagnosticChip: chip,
-        visibleFollowUpType: null,
-        isPlaying: true,
-        isQueueOpen: true,
-        queueRevision: state.queueRevision + 1,
-        toast: null
+        toast: null,
+        thinkingTrackId: state.activeRoom.currentTrackId
       };
     }),
   applyFollowUpOption: (option) =>
@@ -501,24 +612,46 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
         };
       }
 
-      const updatedRoomBase = withUpdatedQueue(state.activeRoom, snapshot.trackQueue);
-      const updatedRoom: FlowRoom = {
-        ...updatedRoomBase,
-        pulse: snapshot.pulse ?? updatedRoomBase.pulse,
-        helperText: snapshot.helperText ?? updatedRoomBase.helperText,
-        memory: mergeMemory(updatedRoomBase, snapshot.memory)
-      };
+      withThinkingDelay(
+        getSteeringThinkingMessage(state.activeRoom.demoFlow, option),
+        () => {
+          const latestState = get();
+          const latestRoom = latestState.activeRoom;
+
+          if (!latestRoom) {
+            return;
+          }
+
+          const updatedRoomBase = withUpdatedQueue(latestRoom, snapshot.trackQueue);
+          const updatedRoom: FlowRoom = {
+            ...updatedRoomBase,
+            pulse: snapshot.pulse ?? updatedRoomBase.pulse,
+            helperText: snapshot.helperText ?? updatedRoomBase.helperText,
+            memory: mergeMemory(updatedRoomBase, snapshot.memory)
+          };
+
+          set({
+            activeRoom: updatedRoom,
+            currentTrackIndex: 0,
+            playbackProgressSeconds: 0,
+            selectedDiagnosticChip: latestState.selectedDiagnosticChip,
+            visibleFollowUpType: null,
+            isPlaying: true,
+            isQueueOpen: true,
+            queueRevision: latestState.queueRevision + 1,
+            toast: null,
+            thinkingTrackId: null,
+            completionHint: null,
+            isFlowThinking: false,
+            thinkingMessage: null
+          });
+        },
+        set
+      );
 
       return {
-        activeRoom: updatedRoom,
-        currentTrackIndex: 0,
-        playbackProgressSeconds: 0,
-        selectedDiagnosticChip: state.selectedDiagnosticChip,
-        visibleFollowUpType: null,
-        isPlaying: true,
-        isQueueOpen: true,
-        queueRevision: state.queueRevision + 1,
-        toast: null
+        toast: null,
+        thinkingTrackId: state.activeRoom.currentTrackId
       };
     }),
   setRefinementDraft: (value) =>
@@ -568,23 +701,44 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       };
     }
 
-    const updatedRoomBase = withUpdatedQueue(activeRoom, snapshot.trackQueue);
-    const updatedRoom: FlowRoom = {
-      ...updatedRoomBase,
-      pulse: snapshot.pulse ?? updatedRoomBase.pulse,
-      helperText: snapshot.helperText ?? updatedRoomBase.helperText,
-      memory: mergeMemory(updatedRoomBase, snapshot.memory)
-    };
+    withThinkingDelay(
+      getSteeringThinkingMessage(activeRoom.demoFlow, "nl_refine"),
+      () => {
+        const latestState = get();
+        const latestRoom = latestState.activeRoom;
+
+        if (!latestRoom) {
+          return;
+        }
+
+        const updatedRoomBase = withUpdatedQueue(latestRoom, snapshot.trackQueue);
+        const updatedRoom: FlowRoom = {
+          ...updatedRoomBase,
+          pulse: snapshot.pulse ?? updatedRoomBase.pulse,
+          helperText: snapshot.helperText ?? updatedRoomBase.helperText,
+          memory: mergeMemory(updatedRoomBase, snapshot.memory)
+        };
+
+        set({
+          activeRoom: updatedRoom,
+          currentTrackIndex: 0,
+          playbackProgressSeconds: 0,
+          queueRevision: latestState.queueRevision + 1,
+          refinementDraft: "",
+          isPlaying: true,
+          isQueueOpen: true,
+          toast: null,
+          thinkingTrackId: null,
+          completionHint: null,
+          isFlowThinking: false,
+          thinkingMessage: null
+        });
+      },
+      set
+    );
 
     set({
-      activeRoom: updatedRoom,
-      currentTrackIndex: 0,
-      playbackProgressSeconds: 0,
-      queueRevision: state.queueRevision + 1,
-      refinementDraft: "",
-      isPlaying: true,
-      isQueueOpen: true,
-      toast: null
+      thinkingTrackId: activeRoom.currentTrackId
     });
 
     return {
@@ -598,7 +752,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       return null;
     }
 
-    return getAllowedControls(activeRoom).hint;
+    return get().completionHint ?? getAllowedControls(activeRoom).hint;
   },
   dismissToast: () =>
     set({

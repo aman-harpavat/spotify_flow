@@ -808,6 +808,7 @@ Behavior:
 - Wrong energy = open follow-up row
 - natural language always available
 - in this prototype, unsupported steering paths for a given hardcoded demo may remain visible but should be disabled with at most one muted hint near the controls guiding the user to the intended demo path
+- when a supported steering action triggers the thinking state, the copy should briefly describe the change in plain listener language
 
 ---
 

@@ -1,13 +1,19 @@
+import { vi } from "vitest";
 import { createRoomFromFlow } from "../../data/demoRooms";
 import { useFlowStore } from "./flowStore";
 
 describe("flowStore steering", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     useFlowStore.setState({
       isLauncherOpen: false,
       launcherStep: "prompt",
       isQueueOpen: false,
       queueRevision: 0,
+      isFlowThinking: false,
+      thinkingMessage: null,
+      thinkingTrackId: null,
+      completionHint: null,
       promptDraft: "",
       selectedStarterPrompt: null,
       keepSeparateProfile: true,
@@ -25,6 +31,11 @@ describe("flowStore steering", () => {
     });
   });
 
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
   it("updates the workout queue when too familiar is selected", () => {
     useFlowStore.setState({
       activeRoom: createRoomFromFlow("fresh_workout"),
@@ -32,6 +43,13 @@ describe("flowStore steering", () => {
     });
 
     useFlowStore.getState().selectDiagnosticChip("too_familiar");
+
+    const pendingState = useFlowStore.getState();
+    expect(pendingState.thinkingMessage).toBe(
+      "Finding less familiar picks that still fit your energy..."
+    );
+
+    vi.runAllTimers();
 
     const state = useFlowStore.getState();
 
@@ -49,6 +67,7 @@ describe("flowStore steering", () => {
     });
 
     const result = useFlowStore.getState().submitRefinement();
+    vi.runAllTimers();
     const state = useFlowStore.getState();
 
     expect(result.ok).toBe(true);
@@ -94,5 +113,41 @@ describe("flowStore steering", () => {
 
     expect(state.currentTrackIndex).toBe(0);
     expect(state.activeRoom?.currentTrackId).toBe("charge-up-nova-run");
+  });
+
+  it("shows thinking state before a room starts playing", () => {
+    useFlowStore.setState({
+      selectedStarterPrompt: "Fresh workout music",
+      selectedArc: "refresh"
+    });
+
+    const result = useFlowStore.getState().createActiveRoom();
+    const pendingState = useFlowStore.getState();
+
+    expect(result.ok).toBe(true);
+    expect(pendingState.isFlowThinking).toBe(true);
+    expect(pendingState.isPlaying).toBe(false);
+    expect(pendingState.thinkingTrackId).toBe("preview-night-bloom");
+
+    vi.runAllTimers();
+
+    const resolvedState = useFlowStore.getState();
+    expect(resolvedState.isFlowThinking).toBe(false);
+    expect(resolvedState.isPlaying).toBe(true);
+    expect(resolvedState.thinkingTrackId).toBeNull();
+  });
+
+  it("shows flow complete when the same tuning chip is selected again", () => {
+    useFlowStore.setState({
+      activeRoom: createRoomFromFlow("fresh_workout"),
+      isPlaying: true,
+      selectedDiagnosticChip: "too_familiar"
+    });
+
+    useFlowStore.getState().selectDiagnosticChip("too_familiar");
+
+    const state = useFlowStore.getState();
+    expect(state.completionHint).toBe("Demo flow is complete for this room");
+    expect(state.toast).toBeNull();
   });
 });

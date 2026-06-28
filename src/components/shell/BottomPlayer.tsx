@@ -13,6 +13,8 @@ export function BottomPlayer() {
   const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
   const previewCurrentTrackIndex = useFlowStore((state) => state.previewCurrentTrackIndex);
   const isPlaying = useFlowStore((state) => state.isPlaying);
+  const isFlowThinking = useFlowStore((state) => state.isFlowThinking);
+  const thinkingTrackId = useFlowStore((state) => state.thinkingTrackId);
   const togglePlayback = useFlowStore((state) => state.togglePlayback);
   const playbackProgressSeconds = useFlowStore((state) => state.playbackProgressSeconds);
   const tickPlayback = useFlowStore((state) => state.tickPlayback);
@@ -20,9 +22,11 @@ export function BottomPlayer() {
   const playPreviousTrack = useFlowStore((state) => state.playPreviousTrack);
   const toggleQueue = useFlowStore((state) => state.toggleQueue);
   const isQueueOpen = useFlowStore((state) => state.isQueueOpen);
-  const currentTrack = activeRoom
-    ? trackCatalog[activeRoom.currentTrackId]
-    : trackCatalog[previewQueue[previewCurrentTrackIndex]];
+  const currentTrack = isFlowThinking && thinkingTrackId
+    ? trackCatalog[thinkingTrackId]
+    : activeRoom
+      ? trackCatalog[activeRoom.currentTrackId]
+      : trackCatalog[previewQueue[previewCurrentTrackIndex]];
   const trackDurationSeconds = currentTrack ? durationToSeconds(currentTrack.duration) : 0;
   const progressRatio =
     trackDurationSeconds > 0
@@ -59,7 +63,7 @@ export function BottomPlayer() {
             </p>
             <p className="truncate text-sm text-spotify-muted">
               {activeRoom && currentTrack
-                ? `${currentTrack.artist} • ${activeRoom.title}`
+                ? `${currentTrack.artist} • ${isFlowThinking ? "Preview mix" : activeRoom.title}`
                 : currentTrack
                   ? `${currentTrack.artist} • Preview mix`
                   : "Build a room to start playback"}
