@@ -20,6 +20,7 @@ describe("flowStore steering", () => {
       suggestedArc: null,
       selectedArc: null,
       activeRoom: null,
+      savedRooms: [],
       currentTrackIndex: 0,
       previewCurrentTrackIndex: 0,
       isPlaying: false,
@@ -137,6 +138,32 @@ describe("flowStore steering", () => {
     expect(resolvedState.thinkingTrackId).toBeNull();
   });
 
+  it("keeps the currently playing track audible while a new room is building", () => {
+    useFlowStore.setState({
+      activeRoom: createRoomFromFlow("rainy_evening"),
+      currentTrackIndex: 2,
+      isPlaying: true,
+      playbackProgressSeconds: 42,
+      selectedStarterPrompt: "Fresh workout music",
+      selectedArc: "refresh"
+    });
+
+    const result = useFlowStore.getState().createActiveRoom();
+    const pendingState = useFlowStore.getState();
+
+    expect(result.ok).toBe(true);
+    expect(pendingState.isFlowThinking).toBe(true);
+    expect(pendingState.isPlaying).toBe(true);
+    expect(pendingState.playbackProgressSeconds).toBe(42);
+    expect(pendingState.thinkingTrackId).toBe("dheemi-raat-kavya");
+
+    vi.runAllTimers();
+
+    const resolvedState = useFlowStore.getState();
+    expect(resolvedState.activeRoom?.currentTrackId).toBe("charge-up-nova-run");
+    expect(resolvedState.playbackProgressSeconds).toBe(42);
+  });
+
   it("shows flow complete when the same tuning chip is selected again", () => {
     useFlowStore.setState({
       activeRoom: createRoomFromFlow("fresh_workout"),
@@ -149,5 +176,84 @@ describe("flowStore steering", () => {
     const state = useFlowStore.getState();
     expect(state.completionHint).toBe("Demo flow is complete for this room");
     expect(state.toast).toBeNull();
+  });
+
+  it("saves the active room for later reopen", () => {
+    useFlowStore.setState({
+      activeRoom: createRoomFromFlow("rainy_evening"),
+      isPlaying: true
+    });
+
+    const result = useFlowStore.getState().saveActiveRoom();
+    const state = useFlowStore.getState();
+
+    expect(result.ok).toBe(true);
+    expect(state.savedRooms).toHaveLength(1);
+    expect(state.savedRooms[0]?.title).toBe("Rainy evening Hindi");
+    expect(state.activeRoom?.status).toBe("saved");
+  });
+
+  it("reopens a saved room as a fresh saved session", () => {
+    useFlowStore.setState({
+      savedRooms: [
+        {
+          id: "rainy_evening",
+          demoFlow: "rainy_evening",
+          title: "Rainy evening Hindi",
+          prompt: "Soft Hindi songs for a rainy evening",
+          starterPrompt: "Rainy evening Hindi",
+          arc: "deep_dive",
+          helperText: "Exploring soft Hindi for a rainy evening",
+          cardHelper: "Reopen for a fresh session in the same vibe",
+          memory: createRoomFromFlow("rainy_evening").memory,
+          reopenCount: 0
+        }
+      ]
+    });
+
+    const result = useFlowStore.getState().reopenSavedRoom("rainy_evening");
+    const pendingState = useFlowStore.getState();
+
+    expect(result.ok).toBe(true);
+    expect(pendingState.isFlowThinking).toBe(true);
+
+    vi.runAllTimers();
+
+    const state = useFlowStore.getState();
+    expect(state.activeRoom?.status).toBe("saved");
+    expect(state.activeRoom?.trackQueue[0]).toBe("bheegi-dhoop-ishan");
+    expect(state.savedRooms[0]?.reopenCount).toBe(1);
+  });
+
+  it("discards the active room without affecting playback state", () => {
+    useFlowStore.setState({
+      activeRoom: {
+        ...createRoomFromFlow("melodic_surprise"),
+        status: "saved"
+      },
+      savedRooms: [
+        {
+          id: "melodic_surprise",
+          demoFlow: "melodic_surprise",
+          title: "Melodic Surprise Flow",
+          prompt: "Surprise me, but keep it Indian and melodic",
+          starterPrompt: "Surprise me",
+          arc: "surprise_me",
+          helperText: "Exploring something new without losing your vibe",
+          cardHelper: "Reopen for a fresh session in the same vibe",
+          memory: createRoomFromFlow("melodic_surprise").memory,
+          reopenCount: 0
+        }
+      ],
+      isPlaying: true
+    });
+
+    const result = useFlowStore.getState().discardActiveRoom();
+    const state = useFlowStore.getState();
+
+    expect(result.ok).toBe(true);
+    expect(state.activeRoom).toBeNull();
+    expect(state.savedRooms).toHaveLength(0);
+    expect(state.toast?.title).toBe("Room discarded");
   });
 });

@@ -732,6 +732,11 @@ Behavior:
 - user must select one of the predefined demo prompts
 - empty submit blocked
 - expose only starter prompts that map to the 3 fully hardcoded demo flows
+- if all 3 demo rooms are already saved for the current session, the launcher switches to a locked state:
+  - prompt field stays empty
+  - prompt chips are replaced by a reopen message
+  - the profile-separation toggle is hidden
+  - `Start room` is visibly disabled
 
 ---
 
@@ -750,6 +755,7 @@ Required UI:
 Behavior:
 - one arc preselected using hardcoded mapping
 - the mapped style remains visible, but in this prototype it should not be overrideable
+- keep only one muted helper line explaining that the demo flow uses one mapped style
 
 ---
 
@@ -985,7 +991,9 @@ The app must support these state changes:
 - room discarded
 - saved room reopened
 
-Saved rooms must persist at least during the active session.
+Saved rooms should reset to the prototype default state on a full reload or server restart:
+- `Surprise me` starts saved
+- the other two demos start unsaved
 
 Local room memory must visibly affect:
 - pulse

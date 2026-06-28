@@ -23,10 +23,6 @@ export function ArcSuggestionStep({
         <h3 className="mt-3 font-spotifyTitle text-3xl font-bold text-white">
           Best fit: {selectedArc ? arcDisplayNames[selectedArc] : "Flow"}
         </h3>
-        <p className="ui-body mt-3">
-          This demo flow is mapped to one starting style. It stays visible here so
-          you can understand the room setup before playback begins.
-        </p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -38,13 +34,13 @@ export function ArcSuggestionStep({
               key={arc}
               type="button"
               disabled
-              className={`rounded-[20px] border px-5 py-4 text-left transition ${
+              className={`flex min-h-[190px] flex-col rounded-[20px] border px-5 py-4 text-left transition ${
                 active
                   ? "border-spotify-green bg-spotify-green text-black"
                   : "cursor-not-allowed border-white/8 bg-spotify-surface text-white/35"
               }`}
             >
-              <p className="text-sm font-bold uppercase tracking-[0.12em]">
+              <p className="min-h-[3.75rem] text-sm font-bold uppercase tracking-[0.12em]">
                 {arcDisplayNames[arc]}
               </p>
               <p

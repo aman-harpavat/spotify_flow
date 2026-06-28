@@ -6,6 +6,7 @@ import {
   FollowUpOption,
   PulseState,
   RoomMemory,
+  SavedRoomDefinition,
   Track
 } from "../domain/types";
 
@@ -680,3 +681,79 @@ export const followUpLabels: Record<FollowUpOption, string> = {
   slower: "Slower",
   faster: "Faster"
 };
+
+export const savedRoomCardHelper = "Reopen for a fresh session in the same vibe";
+
+export const defaultSavedRoom: SavedRoomDefinition = {
+  id: "melodic_surprise",
+  demoFlow: "melodic_surprise",
+  title: "Surprise me",
+  prompt: "Surprise me, but keep it Indian and melodic",
+  starterPrompt: "Surprise me",
+  arc: "surprise_me",
+  helperText: "Exploring something new without losing your vibe",
+  cardHelper: savedRoomCardHelper,
+  memory: emptyMemory(),
+  reopenCount: 0
+};
+
+export const reopenQueueVariants: Record<DemoFlowKey, string[]> = {
+  rainy_evening: [
+    "bheegi-dhoop-ishan",
+    "naram-si-raat-vedika",
+    "dheere-se-anika",
+    "noorani-raat-tara",
+    "saans-halki-zoya",
+    "resham-hawa-mira"
+  ],
+  fresh_workout: [
+    "motion-code-lyra",
+    "breakpoint-eshan",
+    "surgeframe-riko",
+    "kinetic-heat-vaan",
+    "aero-rush-mivik",
+    "crossfade-run-tyra"
+  ],
+  melodic_surprise: [
+    "noor-path-meher",
+    "safar-dheema-samar",
+    "dil-se-door-kavir",
+    "aabshaar-niyati",
+    "sheher-ka-chand-tara-v",
+    "chalte-reh-avik"
+  ]
+};
+
+export function createSavedRoomDefinition(room: FlowRoom): SavedRoomDefinition {
+  return {
+    id: room.demoFlow,
+    demoFlow: room.demoFlow,
+    title: room.starterPrompt,
+    prompt: room.prompt,
+    starterPrompt: room.starterPrompt,
+    arc: room.arc,
+    helperText: room.helperText,
+    cardHelper: savedRoomCardHelper,
+    memory: room.memory,
+    reopenCount: 0
+  };
+}
+
+export function createRoomFromSavedDefinition(savedRoom: SavedRoomDefinition): FlowRoom {
+  const baseRoom = createRoomFromFlow(savedRoom.demoFlow, savedRoom.arc);
+  const reopenQueue = reopenQueueVariants[savedRoom.demoFlow];
+
+  return {
+    ...baseRoom,
+    id: `${savedRoom.demoFlow}-saved-${Date.now()}`,
+    title: savedRoom.title,
+    prompt: savedRoom.prompt,
+    starterPrompt: savedRoom.starterPrompt,
+    status: "saved",
+    pulse: "staying_close",
+    helperText: savedRoom.helperText,
+    currentTrackId: reopenQueue[0],
+    trackQueue: reopenQueue,
+    memory: savedRoom.memory
+  };
+}

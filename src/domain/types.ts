@@ -58,3 +58,16 @@ export type FlowRoom = {
   memory: RoomMemory;
   testHint: string;
 };
+
+export type SavedRoomDefinition = {
+  id: string;
+  demoFlow: DemoFlowKey;
+  title: string;
+  prompt: string;
+  starterPrompt: string;
+  arc: ArcType;
+  helperText: string;
+  cardHelper: string;
+  memory: RoomMemory;
+  reopenCount: number;
+};

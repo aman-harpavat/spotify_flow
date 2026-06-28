@@ -1,10 +1,13 @@
 import { create } from "zustand";
 import {
-  createGeneratedDemoTrack,
+  createRoomFromSavedDefinition,
+  createSavedRoomDefinition,
   createRoomFromFlow,
+  defaultSavedRoom,
   demoFlows,
   promptToDemoFlow,
   previewQueue,
+  savedRoomCardHelper,
   steeringSnapshots,
   trackCatalog
 } from "../../data/demoRooms";
@@ -13,7 +16,8 @@ import {
   DiagnosticChip,
   FlowRoom,
   FollowUpOption,
-  FollowUpType
+  FollowUpType,
+  SavedRoomDefinition
 } from "../../domain/types";
 
 export type LauncherStep = "prompt" | "arc";
@@ -43,6 +47,7 @@ type FlowStore = {
   suggestedArc: ArcType | null;
   selectedArc: ArcType | null;
   activeRoom: FlowRoom | null;
+  savedRooms: SavedRoomDefinition[];
   currentTrackIndex: number;
   previewCurrentTrackIndex: number;
   isPlaying: boolean;
@@ -70,12 +75,15 @@ type FlowStore = {
   applyFollowUpOption: (option: FollowUpOption) => void;
   setRefinementDraft: (value: string) => void;
   submitRefinement: () => { ok: boolean; error?: string };
+  toggleSaveCurrentSong: () => void;
+  saveActiveRoom: () => { ok: boolean; savedRoomId?: string; error?: string };
+  discardActiveRoom: () => { ok: boolean };
+  reopenSavedRoom: (savedRoomId: string) => { ok: boolean; roomId?: string; error?: string };
   getInteractionHint: () => string | null;
   dismissToast: () => void;
 };
 
 const THINKING_DELAY_MS = 5000;
-
 function withThinkingDelay(
   message: string,
   action: () => void,
@@ -182,6 +190,10 @@ function getCurrentTrackId(state: FlowStore): string | null {
   return previewQueue[state.previewCurrentTrackIndex] ?? null;
 }
 
+function getCurrentlyAudibleTrackId(state: FlowStore): string | null {
+  return getCurrentTrackId(state);
+}
+
 export const STARTER_PROMPTS = [
   "Rainy evening Hindi",
   "Fresh workout music",
@@ -203,6 +215,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   suggestedArc: null,
   selectedArc: null,
   activeRoom: null,
+  savedRooms: [defaultSavedRoom],
   currentTrackIndex: 0,
   previewCurrentTrackIndex: 0,
   isPlaying: false,
@@ -215,6 +228,11 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set({
       isLauncherOpen: true,
       launcherStep: "prompt",
+      promptDraft: "",
+      selectedStarterPrompt: null,
+      suggestedArc: null,
+      selectedArc: null,
+      keepSeparateProfile: true,
       toast: null
     }),
   closeLauncher: () =>
@@ -282,6 +300,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       launcherStep: "prompt"
     }),
   startDemoRoomFromPrompt: (starterPrompt) => {
+    const state = get();
     const flowId = promptToDemoFlow[starterPrompt];
 
     if (!flowId) {
@@ -301,9 +320,9 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       selectedArc: suggestedArc,
       activeRoom,
       currentTrackIndex: 0,
-      previewCurrentTrackIndex: 0,
-      isPlaying: false,
-      playbackProgressSeconds: 0,
+      previewCurrentTrackIndex: state.previewCurrentTrackIndex,
+      isPlaying: state.isPlaying,
+      playbackProgressSeconds: state.playbackProgressSeconds,
       queueRevision: get().queueRevision + 1,
       isLauncherOpen: false,
       isQueueOpen: false,
@@ -312,7 +331,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       visibleFollowUpType: null,
       refinementDraft: "",
       toast: null,
-      thinkingTrackId: previewQueue[get().previewCurrentTrackIndex],
+      thinkingTrackId: getCurrentlyAudibleTrackId(state),
       completionHint: null,
       isFlowThinking: true,
       thinkingMessage: "Building your music..."
@@ -333,6 +352,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     };
   },
   createActiveRoom: () => {
+    const state = get();
     const selectedStarterPrompt = get().selectedStarterPrompt;
     const selectedArc = get().selectedArc;
 
@@ -349,10 +369,10 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set({
       activeRoom,
       currentTrackIndex: 0,
-      previewCurrentTrackIndex: 0,
-      isPlaying: false,
-      playbackProgressSeconds: 0,
-      queueRevision: get().queueRevision + 1,
+      previewCurrentTrackIndex: state.previewCurrentTrackIndex,
+      isPlaying: state.isPlaying,
+      playbackProgressSeconds: state.playbackProgressSeconds,
+      queueRevision: state.queueRevision + 1,
       isLauncherOpen: false,
       isQueueOpen: false,
       launcherStep: "prompt",
@@ -360,7 +380,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       visibleFollowUpType: null,
       refinementDraft: "",
       toast: null,
-      thinkingTrackId: previewQueue[get().previewCurrentTrackIndex],
+      thinkingTrackId: getCurrentlyAudibleTrackId(state),
       completionHint: null,
       isFlowThinking: true,
       thinkingMessage: "Building your music..."
@@ -743,6 +763,155 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
 
     return {
       ok: true
+    };
+  },
+  toggleSaveCurrentSong: () =>
+    set((state) => {
+      if (!state.activeRoom) {
+        return state;
+      }
+
+      const currentTrackId = state.activeRoom.currentTrackId;
+      const savedTrackIds = state.activeRoom.memory.savedTrackIds.includes(currentTrackId)
+        ? state.activeRoom.memory.savedTrackIds.filter((trackId) => trackId !== currentTrackId)
+        : [...state.activeRoom.memory.savedTrackIds, currentTrackId];
+
+      return {
+        activeRoom: {
+          ...state.activeRoom,
+          memory: {
+            ...state.activeRoom.memory,
+      savedTrackIds
+          }
+        },
+        toast: {
+          title: savedTrackIds.includes(currentTrackId) ? "Song saved" : "Song removed",
+          message: savedTrackIds.includes(currentTrackId)
+            ? "This song is now saved inside the room."
+            : "This song is no longer saved in the room."
+        }
+      };
+    }),
+  saveActiveRoom: () => {
+    const state = get();
+
+    if (!state.activeRoom) {
+      return {
+        ok: false,
+        error: "No active room"
+      };
+    }
+
+    const savedRoom = createSavedRoomDefinition({
+      ...state.activeRoom,
+      status: "saved"
+    });
+
+    const savedRooms = [
+      savedRoom,
+      ...state.savedRooms.filter((room) => room.id !== savedRoom.id)
+    ];
+
+    set({
+      savedRooms,
+      activeRoom: {
+        ...state.activeRoom,
+        status: "saved"
+      },
+      toast: {
+        title: `${savedRoom.title} saved`,
+        message: savedRoomCardHelper
+      }
+    });
+
+    return {
+      ok: true,
+      savedRoomId: savedRoom.id
+    };
+  },
+  discardActiveRoom: () => {
+    const state = get();
+    const savedRooms =
+      state.activeRoom?.status === "saved"
+        ? state.savedRooms.filter((room) => room.id !== state.activeRoom?.demoFlow)
+        : state.savedRooms;
+
+    set({
+      activeRoom: null,
+      savedRooms,
+      currentTrackIndex: 0,
+      selectedDiagnosticChip: null,
+      visibleFollowUpType: null,
+      refinementDraft: "",
+      completionHint: null,
+      isFlowThinking: false,
+      thinkingMessage: null,
+      thinkingTrackId: null,
+      isQueueOpen: false,
+      isPlaying: true,
+      toast: {
+        title: "Room discarded",
+        message: "Your main taste profile was not affected."
+      }
+    });
+
+    return {
+      ok: true
+    };
+  },
+  reopenSavedRoom: (savedRoomId) => {
+    const state = get();
+    const savedRoom = state.savedRooms.find((room) => room.id === savedRoomId);
+
+    if (!savedRoom) {
+      return {
+        ok: false,
+        error: "Saved room not found"
+      };
+    }
+
+    const activeRoom = createRoomFromSavedDefinition(savedRoom);
+    const updatedSavedRoom: SavedRoomDefinition = {
+      ...savedRoom,
+      reopenCount: savedRoom.reopenCount + 1
+    };
+    const savedRooms = state.savedRooms.map((room) =>
+      room.id === savedRoomId ? updatedSavedRoom : room
+    );
+
+    set({
+      activeRoom,
+      savedRooms,
+      currentTrackIndex: 0,
+      isFlowThinking: true,
+      thinkingMessage: "Rebuilding this room in the same vibe...",
+      thinkingTrackId: getCurrentlyAudibleTrackId(state),
+      isPlaying: state.isPlaying,
+      playbackProgressSeconds: state.playbackProgressSeconds,
+      selectedDiagnosticChip: null,
+      visibleFollowUpType: null,
+      refinementDraft: "",
+      completionHint: null,
+      queueRevision: state.queueRevision + 1,
+      isQueueOpen: false
+    });
+
+    window.setTimeout(() => {
+      set({
+        isFlowThinking: false,
+        thinkingMessage: null,
+        thinkingTrackId: null,
+        isPlaying: true,
+        toast: {
+          title: "Saved room reopened",
+          message: "Fresh session ready in the same vibe."
+        }
+      });
+    }, THINKING_DELAY_MS);
+
+    return {
+      ok: true,
+      roomId: activeRoom.id
     };
   },
   getInteractionHint: () => {

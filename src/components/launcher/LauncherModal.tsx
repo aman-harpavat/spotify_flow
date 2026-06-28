@@ -10,6 +10,7 @@ export function LauncherModal() {
   const selectedStarterPrompt = useFlowStore((state) => state.selectedStarterPrompt);
   const keepSeparateProfile = useFlowStore((state) => state.keepSeparateProfile);
   const selectedArc = useFlowStore((state) => state.selectedArc);
+  const savedRooms = useFlowStore((state) => state.savedRooms);
   const selectStarterPrompt = useFlowStore((state) => state.selectStarterPrompt);
   const toggleSeparateProfile = useFlowStore((state) => state.toggleSeparateProfile);
   const closeLauncher = useFlowStore((state) => state.closeLauncher);
@@ -25,6 +26,10 @@ export function LauncherModal() {
 
     return "This room can shape what Flow leans toward later in the experience.";
   }, [keepSeparateProfile]);
+  const availablePrompts = STARTER_PROMPTS.filter(
+    (prompt) => !savedRooms.some((room) => room.starterPrompt === prompt)
+  );
+  const allPromptsSaved = availablePrompts.length === 0;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,7 +59,9 @@ export function LauncherModal() {
             </h2>
             <p className="ui-body mt-3 max-w-2xl">
               {launcherStep === "prompt"
-                ? "Start with a quick idea, then pick one of the demo prompts below to open a guided Flow room."
+                ? allPromptsSaved
+                  ? "You have already saved every guided demo. Reopen one from Saved rooms to keep exploring."
+                  : "Start with a quick idea, then pick one of the demo prompts below to open a guided Flow room."
                 : "Flow picked the mapped starting style for this prompt. This demo keeps that style locked so the intended path stays clear."}
             </p>
           </div>
@@ -78,18 +85,25 @@ export function LauncherModal() {
                 type="button"
                 onClick={() => setShowDemoHint(true)}
                 onFocus={() => setShowDemoHint(true)}
-                className="w-full rounded-[22px] border border-white/10 bg-spotify-surfaceAlt px-5 py-4 text-left outline-none transition hover:border-white/20 focus:border-white/25"
+                disabled={allPromptsSaved}
+                className={`w-full rounded-[22px] border border-white/10 bg-spotify-surfaceAlt px-5 py-4 text-left outline-none transition ${
+                  allPromptsSaved
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:border-white/20 focus:border-white/25"
+                }`}
               >
                 <p
                   className={`text-base ${
                     selectedStarterPrompt ? "text-white" : "text-spotify-muted"
                   }`}
                 >
-                  {promptDraft || "\u00A0"}
+                  {allPromptsSaved ? "\u00A0" : promptDraft || "\u00A0"}
                 </p>
                 {showDemoHint ? (
                   <p className="ui-hint mt-2">
-                    Please select a prompt from below for demo
+                    {allPromptsSaved
+                      ? "All guided demos are already saved. Reopen one from Saved rooms."
+                      : "Please select a prompt from below for demo"}
                   </p>
                 ) : null}
               </button>
@@ -99,8 +113,15 @@ export function LauncherModal() {
               <p className="ui-label mb-3">
                 Pick a demo prompt
               </p>
-              <div className="flex flex-wrap gap-3">
-                {STARTER_PROMPTS.map((prompt) => {
+              {allPromptsSaved ? (
+                <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                  <p className="ui-muted">
+                    All guided demos are saved right now. Head to Saved rooms on Home to reopen one.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {availablePrompts.map((prompt) => {
                   const active = selectedStarterPrompt === prompt;
 
                   return (
@@ -117,43 +138,53 @@ export function LauncherModal() {
                       {prompt}
                     </button>
                   );
-                })}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
 
-            <div className="ui-surface rounded-[22px] p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    Keep this room separate from my main taste profile
-                  </p>
-                  <p className="ui-muted mt-2 max-w-2xl">{helperText}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={toggleSeparateProfile}
-                  className={`relative h-8 w-14 shrink-0 rounded-pill transition ${
-                    keepSeparateProfile ? "bg-spotify-green" : "bg-white/20"
-                  }`}
-                  aria-pressed={keepSeparateProfile}
-                  aria-label="Toggle separate room behavior"
-                >
-                  <span
-                    className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
-                      keepSeparateProfile ? "left-7" : "left-1"
+            {!allPromptsSaved ? (
+              <div className="ui-surface rounded-[22px] p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      Keep this room separate from my main taste profile
+                    </p>
+                    <p className="ui-muted mt-2 max-w-2xl">{helperText}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleSeparateProfile}
+                    className={`relative h-8 w-14 shrink-0 rounded-pill transition ${
+                      keepSeparateProfile ? "bg-spotify-green" : "bg-white/20"
                     }`}
-                  />
-                </button>
+                    aria-pressed={keepSeparateProfile}
+                    aria-label="Toggle separate room behavior"
+                  >
+                    <span
+                      className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
+                        keepSeparateProfile ? "left-7" : "left-1"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <div className="flex flex-col gap-3 border-t border-white/8 pt-5 md:flex-row md:items-center md:justify-between">
               <p className="ui-muted">
-                Select one of the three demo prompts to continue.
+                {allPromptsSaved
+                  ? "Reopen a saved room from Home to continue."
+                  : "Select one of the available demo prompts to continue."}
               </p>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-pill bg-spotify-green px-6 py-3 text-sm font-bold uppercase tracking-spotify text-black transition hover:scale-[1.02]"
+                disabled={allPromptsSaved}
+                className={`inline-flex items-center justify-center rounded-pill px-6 py-3 text-sm font-bold uppercase tracking-spotify transition ${
+                  allPromptsSaved
+                    ? "cursor-not-allowed bg-white/10 text-white/35"
+                    : "bg-spotify-green text-black hover:scale-[1.02]"
+                }`}
               >
                 Start room
               </button>

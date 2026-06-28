@@ -26,7 +26,8 @@ Goals for this architecture:
 - local component state for short-lived UI state
 
 ### Persistence
-- `localStorage` for saved rooms during prototype use
+- keep saved-room state in memory for the current prototype session
+- on full reload, reset to the default seeded state with only `Surprise me` saved
 
 ### Testing
 - Vitest
@@ -230,8 +231,8 @@ Use one small global store with clear slices.
 - `refinementDraft`
 
 ### Persistence boundary
-- save only `savedRooms` to `localStorage`
-- keep active playback session in memory only
+- keep saved rooms and active playback session in memory only
+- on reload, re-seed the prototype with the default saved-room state
 
 ---
 
@@ -347,6 +348,7 @@ Queue mutation should be deterministic, visible, and easy to reason about.
   - a subtle refresh animation whenever playback advances or steering swaps the queue
 - placeholder cards fill any unused visible queue slots so the rail stays visually stable without permanently mutating the queue
 - when a track finishes, playback advances to the next queued track; if the session reaches the end, it loops back to the start of the current room queue
+- when a new room is opening or reopening, the bottom player keeps the currently audible song visible during the 5-second Flow thinking state, then hands off to the first track in the new room
 
 ### Mutation strategy
 - each meaningful steering action resolves to a named `QueueSnapshot`
@@ -387,6 +389,7 @@ When the user saves a room:
 When reopening a saved room:
 - create a brand-new active room session from the saved definition
 - do not reuse the exact last active queue
+- if all starter demos are already saved in the current session, the launcher becomes informational only and points the user back to `Saved rooms` instead of allowing another room start
 - choose a fresh queue variant tied to that saved flow
 - reset pulse to `Staying close`
 - preserve saved room identity and memory
@@ -399,7 +402,7 @@ Example:
 - later reopens can reuse that same reopen queue unless we explicitly add more variants
 
 ### Persistence scope
-- saved rooms persist in `localStorage`
+- saved rooms do not persist across full reloads in this prototype
 - active unsaved rooms do not persist across refresh
 
 ---

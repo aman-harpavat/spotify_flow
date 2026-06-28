@@ -1,5 +1,5 @@
 import { FormEvent } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   arcDisplayNames,
   followUpLabels,
@@ -60,6 +60,7 @@ function getDemoControls(
 }
 
 export function RoomView() {
+  const navigate = useNavigate();
   const { roomId } = useParams();
   const activeRoom = useFlowStore((state) => state.activeRoom);
   const currentTrackIndex = useFlowStore((state) => state.currentTrackIndex);
@@ -74,6 +75,8 @@ export function RoomView() {
   const applyFollowUpOption = useFlowStore((state) => state.applyFollowUpOption);
   const setRefinementDraft = useFlowStore((state) => state.setRefinementDraft);
   const submitRefinement = useFlowStore((state) => state.submitRefinement);
+  const saveActiveRoom = useFlowStore((state) => state.saveActiveRoom);
+  const discardActiveRoom = useFlowStore((state) => state.discardActiveRoom);
   const interactionHint = useFlowStore((state) => state.getInteractionHint());
 
   if (!activeRoom || activeRoom.id !== roomId) {
@@ -92,6 +95,13 @@ export function RoomView() {
   const handleRefinementSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     submitRefinement();
+  };
+  const handleSaveRoom = () => {
+    saveActiveRoom();
+  };
+  const handleDiscardRoom = () => {
+    discardActiveRoom();
+    navigate("/");
   };
 
   return (
@@ -112,9 +122,18 @@ export function RoomView() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-pill bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80">
-                Temporary room
-              </span>
+              <button
+                type="button"
+                onClick={activeRoom.status === "saved" ? handleDiscardRoom : handleSaveRoom}
+                disabled={isFlowThinking}
+                className={`rounded-pill px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition ${
+                  activeRoom.status === "saved"
+                    ? "bg-white/10 text-white/80 hover:bg-white/15"
+                    : "bg-spotify-green text-black hover:scale-[1.02]"
+                } ${isFlowThinking ? "cursor-not-allowed opacity-50" : ""}`}
+              >
+                {activeRoom.status === "saved" ? "Discard room" : "Save room"}
+              </button>
               <span className="rounded-pill bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80">
                 Style: {arcDisplayNames[activeRoom.arc]}
               </span>
